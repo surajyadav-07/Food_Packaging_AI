@@ -4,7 +4,7 @@ An end-to-end, physics-grounded decision support prototype designed for food sci
 
 ---
 
-🔗 **Live Demo:** https://tumhara-link.streamlit.app
+🔗 **Live Demo:** https://food-packaging-ai.streamlit.app/
 
 ## 🚀 Quick Start Guide (Windows)
 
