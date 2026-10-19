@@ -939,3 +939,8 @@ def get_recommendation_history(limit: int = 50, db_path: str = DB_FILE_PATH) -> 
     rows = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return rows
+
+
+# Convenience alias for backward compatibility
+get_all_commodities = get_all_commodity_presets
+

@@ -952,8 +952,9 @@ if current_selected_idx == 0:
     # Real-Data Application Summary Cards (Zero Fabricated Metrics)
     all_db_mats = database.get_all_materials()
     total_db_mats = len(all_db_mats)
-    all_db_comms = database.get_all_commodities()
+    all_db_comms = database.get_all_commodity_presets()
     total_db_comms = len(all_db_comms)
+
     
     st.markdown(
         f"""
