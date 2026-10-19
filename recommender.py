@@ -1,17 +1,25 @@
+
 """
-recommender.py - Transparent Multi-Criteria Recommendation Engine
-Implements:
-1. Stage-1 Hard Knockout Constraints (Physical, Thermal, Biological & Food Safety Feasibility)
-2. Stage-2 Multi-Criteria Decision Analysis (MCDA) Scoring (Barrier, Cost, Sustainability, Mechanical)
-3. Transparent Explainability Engine with Requirements Met, Trade-offs, and Missing Data Disclosures.
+Food Packaging AI — Transparent Multi-Criteria Recommendation Engine
+
+Features:
+1. Stage-1 hard knockout constraints.
+2. Stage-2 multi-criteria decision analysis (MCDA).
+3. Barrier, cost, sustainability and mechanical scoring.
+4. Explainable recommendations and trade-offs.
+5. Explicit missing-data disclosures.
+6. Conservative food-contact compliance handling.
+
+Important:
+Scores are decision-support estimates, not proof of food safety,
+regulatory approval, or experimentally validated shelf life.
 """
 
 from typing import List, Dict, Any, Tuple, Optional
+import math
 import numpy as np
-import pandas as pd
 
 
-# Recyclability baseline scores (0-100 scale) based on circular packaging literature
 RECYCLABILITY_SCORE_MAP = {
     "Widely Recyclable (PE Stream)": 95.0,
     "Widely Recyclable (HDPE Stream)": 95.0,
@@ -29,18 +37,131 @@ RECYCLABILITY_SCORE_MAP = {
 }
 
 
+def _number(
+    value: Any,
+    default: Optional[float] = None
+) -> Optional[float]:
+    """Safely parse finite numeric values."""
+    if value is None or isinstance(value, bool):
+        return default
+
+    try:
+        result = float(value)
+        return result if math.isfinite(result) else default
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
+def _text(value: Any, default: str = "") -> str:
+    """Convert a value to normalized lowercase text."""
+    if value is None:
+        return default.lower()
+
+    result = str(value).strip().lower()
+    if result in {"", "none", "nan", "n/a", "null"}:
+        return default.lower()
+
+    return result
+
+
+def _has_verified_compliance_status(material: Dict[str, Any]) -> bool:
+    """
+    Check whether the material records an affirmative food-contact compliance
+    status or recognized regulatory standard citation.
+
+    This checks recorded database/catalog status fields only. It does NOT
+    independently verify certificates, regulatory approval, or supporting documentation.
+    Missing, blank, unknown, pending, or unapproved statuses fail closed.
+    """
+    raw_status = material.get("food_contact_compliance")
+    if raw_status is None:
+        return False
+
+    status = _text(raw_status)
+    if not status:
+        return False
+
+    # Negative / unverified indicators that must immediately fail closed.
+    unverified_tokens = (
+        "pending",
+        "unapproved",
+        "unverified",
+        "unknown",
+        "not compliant",
+        "non-compliant",
+        "non compliant",
+        "not approved",
+        "not certified",
+        "not available",
+        "missing",
+        "untested",
+        "failed",
+        "rejected",
+        "prohibited",
+        "restricted",
+        "none",
+        "nan",
+        "n/a",
+        "null",
+        "ineligible",
+        "non-food",
+    )
+
+    for token in unverified_tokens:
+        if token in status:
+            return False
+
+    # Recognized affirmative statuses and regulatory standards.
+    # 1. Direct affirmative status keywords
+    affirmative_keywords = (
+        "compliant",
+        "approved",
+        "verified",
+        "certified",
+        "food-contact compliant",
+        "food contact compliant",
+        "food safe",
+        "food-grade",
+        "food grade",
+    )
+    for kw in affirmative_keywords:
+        if kw in status:
+            return True
+
+    # 2. Recognized regulatory standard citations & frameworks
+    # (e.g. US FDA 21 CFR §177.xxx, EU 10/2011, EU 1935/2004, EFSA, BfR, FSSAI, FDA GRAS)
+    regulatory_frameworks = (
+        "fda",
+        "21 cfr",
+        "cfr",
+        "gras",
+        "letter of no objection",
+        "nol",
+        "eu 10/2011",
+        "10/2011",
+        "1935/2004",
+        "efsa",
+        "bfr",
+        "fssai",
+        "gb 9685",
+        "gb 4806",
+        "is 9845",
+        "bis",
+    )
+    for rf in regulatory_frameworks:
+        if rf in status:
+            return True
+
+    return False
+
+
 def filter_knockouts(
     materials: List[Dict[str, Any]],
     commodity_profile: Dict[str, Any]
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
-    Applies scientifically grounded Stage-1 elimination constraints:
-    - Temperature survivability
-    - Active respiration / breathability for fresh produce
-    - Puncture resistance for sharp commodities
-    - Extreme moisture sensitivity vs high-permeability materials
-    - Grease / fat resistance for lipid-rich foods
-    - Food contact compliance check
+    Apply screening constraints for temperature, fresh produce,
+    puncture risk, moisture, oxygen, grease and food-contact status.
 
     Returns:
         (qualified_materials, knocked_out_materials_with_reasons)
@@ -48,72 +169,156 @@ def filter_knockouts(
     qualified = []
     knocked_out = []
 
-    storage_temp = float(commodity_profile.get("storage_temp_c", 23.0))
-    category = str(commodity_profile.get("category", "")).lower()
-    moisture_sens = str(commodity_profile.get("moisture_sensitivity", "Moderate")).lower()
-    oxygen_sens = str(commodity_profile.get("oxygen_sensitivity", "Moderate")).lower()
-    fat_content = str(commodity_profile.get("fat_content_level", "Low")).lower()
-    puncture_risk = str(commodity_profile.get("puncture_risk", "Low")).lower()
-    target_shelf_life = int(commodity_profile.get("target_shelf_life_days", 90))
-    require_compliance = bool(commodity_profile.get("require_food_contact_compliance", True))
+    storage_temp = _number(
+        commodity_profile.get("storage_temp_c"), 23.0
+    )
+    category = _text(commodity_profile.get("category"))
+    moisture_sens = _text(
+        commodity_profile.get("moisture_sensitivity"), "moderate"
+    )
+    oxygen_sens = _text(
+        commodity_profile.get("oxygen_sensitivity"), "moderate"
+    )
+    fat_content = _text(
+        commodity_profile.get("fat_content_level"), "low"
+    )
+    puncture_risk = _text(
+        commodity_profile.get("puncture_risk"), "low"
+    )
+    target_shelf_life = _number(
+        commodity_profile.get("target_shelf_life_days"), 90.0
+    )
+    require_compliance = commodity_profile.get(
+        "require_food_contact_compliance", True
+    )
 
-    is_fresh_produce = "fruit" in category or "vegetable" in category or "fresh cut" in category
+    # Avoid treating a string such as "false" as True.
+    if isinstance(require_compliance, str):
+        require_compliance = (
+            require_compliance.strip().lower()
+            in {"true", "1", "yes"}
+        )
+    else:
+        require_compliance = bool(require_compliance)
+
+    is_fresh_produce = any(
+        term in category
+        for term in ("fruit", "vegetable", "fresh cut")
+    )
 
     for mat in materials:
         reasons = []
 
-        # 1. Thermal tolerance check
-        t_min = mat.get("temp_range_min_c", -40.0)
-        t_max = mat.get("temp_range_max_c", 100.0)
-        if storage_temp < t_min:
-            reasons.append(f"Storage temperature ({storage_temp}°C) is below minimum safe rating ({t_min}°C); risk of cold embrittlement / seal shattering.")
-        if storage_temp > t_max:
-            reasons.append(f"Storage temperature ({storage_temp}°C) exceeds maximum safe rating ({t_max}°C); risk of polymer thermal deformation / seal creep.")
+        t_min = _number(mat.get("temp_range_min_c"))
+        t_max = _number(mat.get("temp_range_max_c"))
 
-        # 2. Fresh Produce / Active Respiration Rule
-        # Fresh respiring produce requires gas transmission or micro-perforations to avoid anaerobic spoilage.
-        # Absolute zero-barrier foils or impermeable multi-layer laminates without ventilation are unsafe.
+        if t_min is not None and storage_temp < t_min:
+            reasons.append(
+                f"Storage temperature ({storage_temp}°C) is below "
+                f"the listed minimum ({t_min}°C)."
+            )
+
+        if t_max is not None and storage_temp > t_max:
+            reasons.append(
+                f"Storage temperature ({storage_temp}°C) exceeds "
+                f"the listed maximum ({t_max}°C)."
+            )
+
+        # Fresh produce usually requires suitable gas exchange.
         if is_fresh_produce:
-            mat_name = mat.get("name", "").lower()
-            otr = mat.get("otr_cc_m2_day_atm", 100.0)
-            if "micro-perforated" not in mat_name and otr < 100.0:
-                reasons.append("Hermetic high-barrier film is hazardous for fresh respiring produce; triggers anaerobic respiration, off-flavors, and pathogen proliferation.")
+            mat_name = _text(mat.get("name"))
+            otr = _number(mat.get("otr_cc_m2_day_atm"))
 
-        # 3. Puncture resistance for sharp commodities
-        if puncture_risk in ["high", "very high"]:
-            punc_res = str(mat.get("puncture_resistance", "Medium")).lower()
-            thick = float(mat.get("nominal_thickness_um", 30.0))
-            if punc_res == "low" or thick < 20.0:
-                reasons.append(f"Inadequate puncture resistance ({mat.get('puncture_resistance')}, {thick} µm) for sharp-edged food; high risk of pinholing and seal breach.")
+            if "micro-perforated" not in mat_name and (
+                otr is None or otr < 100.0
+            ):
+                reasons.append(
+                    "Gas transmission data is insufficient or below "
+                    "the screening threshold for fresh produce. "
+                    "Confirm produce-specific respiration and packaging "
+                    "requirements before selecting this material."
+                )
 
-        # 4. Extreme moisture sensitivity + long shelf-life knockout
+        if puncture_risk in {"high", "very high"}:
+            punc_res = _text(mat.get("puncture_resistance"))
+            thick = _number(mat.get("nominal_thickness_um"))
+
+            if punc_res in {"low", "poor"}:
+                reasons.append(
+                    "Listed puncture resistance is inadequate for "
+                    "the selected high-puncture-risk commodity."
+                )
+
+            if thick is not None and thick < 20.0:
+                reasons.append(
+                    f"Listed thickness ({thick} µm) is below the "
+                    "configured 20 µm screening threshold."
+                )
+
+            if punc_res in {"", "unknown"} or thick is None:
+                reasons.append(
+                    "Puncture resistance or thickness data is missing "
+                    "for a high-puncture-risk commodity."
+                )
+
         if "extreme" in moisture_sens and target_shelf_life >= 60:
-            wvtr = float(mat.get("wvtr_g_m2_day", 10.0))
-            if wvtr > 35.0:
-                reasons.append(f"Water vapor transmission rate ({wvtr} g/m²/day) is excessively high for extreme moisture-sensitive commodity requiring {target_shelf_life} days.")
+            wvtr = _number(mat.get("wvtr_g_m2_day"))
 
-        # 5. Critical oxygen sensitivity + long shelf-life knockout
+            if wvtr is None:
+                reasons.append(
+                    "WVTR data is missing for an extreme "
+                    "moisture-sensitive commodity."
+                )
+            elif wvtr > 35.0:
+                reasons.append(
+                    f"WVTR ({wvtr} g/m²/day) exceeds the configured "
+                    "screening threshold of 35."
+                )
+
         if "critical" in oxygen_sens and target_shelf_life >= 90:
-            otr = float(mat.get("otr_cc_m2_day_atm", 1000.0))
-            if otr > 3000.0:
-                reasons.append(f"Oxygen transmission rate ({otr} cc/m²/day) is too permeable for critical lipid-oxidation prone commodity across {target_shelf_life} days.")
+            otr = _number(mat.get("otr_cc_m2_day_atm"))
 
-        # 6. High fat / lipid resistance
-        if ("high" in fat_content or "very high" in fat_content) and "zero" not in fat_content:
-            grease_res = str(mat.get("grease_fat_resistance", "Moderate")).lower()
-            if grease_res in ["low", "poor"]:
-                reasons.append(f"Inadequate grease/fat resistance ({mat.get('grease_fat_resistance')}); fatty acids may plasticize or delaminate film.")
+            if otr is None:
+                reasons.append(
+                    "OTR data is missing for a critical "
+                    "oxygen-sensitive commodity."
+                )
+            elif otr > 3000.0:
+                reasons.append(
+                    f"OTR ({otr} cc/m²/day/atm) exceeds the configured "
+                    "screening threshold of 3000."
+                )
 
-        # 7. Food contact compliance check
-        if require_compliance:
-            compliance = str(mat.get("food_contact_compliance", "")).lower()
-            if "pending" in compliance or "unapproved" in compliance:
-                reasons.append("Lacks certified food contact compliance evidence (FDA / EU / national standard).")
+        if "high" in fat_content:
+            grease_res = _text(
+                mat.get("grease_fat_resistance"), "unknown"
+            )
+
+            if grease_res in {"low", "poor"}:
+                reasons.append(
+                    "Listed grease/fat resistance is inadequate "
+                    "for a high-fat commodity."
+                )
+            elif grease_res in {"", "unknown"}:
+                reasons.append(
+                    "Grease/fat resistance data is missing for "
+                    "a high-fat commodity."
+                )
+
+        # Fail closed when food-contact status is missing or unverified.
+        if require_compliance and not _has_verified_compliance_status(mat):
+            raw_c = mat.get("food_contact_compliance")
+            status_label = f" ('{raw_c}')" if raw_c and str(raw_c).strip() else ""
+            reasons.append(
+                f"Food-contact compliance status is missing, unapproved, "
+                f"or unverified{status_label}. Valid regulatory compliance evidence "
+                f"is required before treating this material as compliant."
+            )
 
         if reasons:
-            knocked_copy = dict(mat)
-            knocked_copy["knockout_reasons"] = reasons
-            knocked_out.append(knocked_copy)
+            rejected = dict(mat)
+            rejected["knockout_reasons"] = reasons
+            knocked_out.append(rejected)
         else:
             qualified.append(mat)
 
@@ -124,20 +329,27 @@ def compute_barrier_score(
     material: Dict[str, Any],
     commodity_profile: Dict[str, Any]
 ) -> Tuple[float, Dict[str, Any]]:
-    """
-    Computes a transparent 0-100 barrier protection utility score:
-    Evaluates WVTR fitness and OTR fitness according to food degradation sensitivity.
-    """
-    wvtr = float(material.get("wvtr_g_m2_day", 10.0))
-    otr = float(material.get("otr_cc_m2_day_atm", 1000.0))
-    category = str(commodity_profile.get("category", "")).lower()
-    is_fresh = "fruit" in category or "vegetable" in category
+    """Compute a heuristic 0–100 barrier utility score."""
 
-    moisture_sens = str(commodity_profile.get("moisture_sensitivity", "Moderate")).lower()
-    oxygen_sens = str(commodity_profile.get("oxygen_sensitivity", "Moderate")).lower()
-    light_sens = str(commodity_profile.get("light_sensitivity", "Low")).lower()
+    wvtr = _number(material.get("wvtr_g_m2_day"))
+    otr = _number(material.get("otr_cc_m2_day_atm"))
 
-    # Target thresholds based on food science benchmarks
+    category = _text(commodity_profile.get("category"))
+    is_fresh = any(
+        term in category
+        for term in ("fruit", "vegetable", "fresh cut")
+    )
+
+    moisture_sens = _text(
+        commodity_profile.get("moisture_sensitivity"), "moderate"
+    )
+    oxygen_sens = _text(
+        commodity_profile.get("oxygen_sensitivity"), "moderate"
+    )
+    light_sens = _text(
+        commodity_profile.get("light_sensitivity"), "low"
+    )
+
     if "extreme" in moisture_sens:
         target_wvtr = 1.0
     elif "high" in moisture_sens:
@@ -156,39 +368,50 @@ def compute_barrier_score(
     else:
         target_otr = 7000.0
 
-    # For fresh respiring produce: balanced EMAP transmission is rewarded, hermetic zero barrier is penalized
+    def transmission_fit(
+        actual: Optional[float],
+        target: float
+    ) -> float:
+        if actual is None or actual < 0:
+            return 0.0
+        if actual <= target:
+            return 100.0
+        return max(
+            10.0,
+            100.0 * math.sqrt(target / actual)
+        )
+
+    wvtr_fit = transmission_fit(wvtr, target_wvtr)
+    otr_fit = transmission_fit(otr, target_otr)
+
     if is_fresh:
-        if 1000.0 <= otr <= 10000.0 and wvtr >= 30.0:
-            barrier_score = 95.0
-        elif otr > 10000.0:
-            barrier_score = 80.0
+        # A simplified screening heuristic, not a validated MAP model.
+        if wvtr is not None and otr is not None:
+            if 1000.0 <= otr <= 10000.0 and wvtr >= 30.0:
+                barrier_score = 95.0
+            elif otr > 10000.0:
+                barrier_score = 80.0
+            else:
+                barrier_score = 45.0
         else:
-            barrier_score = 45.0
-        wvtr_fit = 90.0 if wvtr >= 30.0 else 50.0
-        otr_fit = 95.0 if 1000.0 <= otr <= 10000.0 else 40.0
+            barrier_score = 0.0
     else:
-        # Standard foods: lower transmission is better or equal to target
-        # WVTR score
-        if wvtr <= target_wvtr:
-            wvtr_fit = 100.0
-        else:
-            ratio = target_wvtr / (wvtr + 1e-6)
-            wvtr_fit = max(10.0, 100.0 * float(np.sqrt(np.clip(ratio, 0.0, 1.0))))
-
-        # OTR score
-        if otr <= target_otr:
-            otr_fit = 100.0
-        else:
-            ratio = target_otr / (otr + 1e-6)
-            otr_fit = max(10.0, 100.0 * float(np.sqrt(np.clip(ratio, 0.0, 1.0))))
-
+        # Missing barrier values contribute zero rather than being
+        # silently replaced with optimistic defaults.
         barrier_score = 0.55 * wvtr_fit + 0.45 * otr_fit
 
-    # Light barrier adjustment
-    light_rating = str(material.get("light_barrier_rating", "Low")).lower()
+    light_rating = _text(
+        material.get("light_barrier_rating"), "unknown"
+    )
+
     if "critical" in light_sens or "high" in light_sens:
-        if "opaque" in light_rating or "total" in light_rating or "high" in light_rating:
+        if any(
+            term in light_rating
+            for term in ("opaque", "total", "high")
+        ):
             barrier_score = min(100.0, barrier_score + 5.0)
+        elif light_rating == "unknown":
+            barrier_score = max(0.0, barrier_score - 10.0)
         else:
             barrier_score = max(15.0, barrier_score - 15.0)
 
@@ -199,55 +422,93 @@ def compute_barrier_score(
         "otr_actual": otr,
         "otr_target": target_otr,
         "otr_fit_score": round(otr_fit, 1),
-        "barrier_overall": round(barrier_score, 1)
+        "barrier_overall": round(
+            float(np.clip(barrier_score, 0.0, 100.0)), 1
+        ),
+        "data_complete": wvtr is not None and otr is not None,
+        "score_is_heuristic": True,
     }
-    return float(np.clip(barrier_score, 0.0, 100.0)), details
+
+    return (
+        float(np.clip(barrier_score, 0.0, 100.0)),
+        details
+    )
 
 
-def compute_sustainability_score(material: Dict[str, Any]) -> float:
+def compute_sustainability_score(
+    material: Dict[str, Any]
+) -> float:
     """
-    Computes sustainability utility score (0-100) based on recyclability tier
-    and cradle-to-gate carbon footprint index.
-    """
-    recyclability_status = material.get("recyclability_status", "")
-    base_score = RECYCLABILITY_SCORE_MAP.get(recyclability_status, 40.0)
+    Estimate sustainability utility using the configured recyclability
+    map and a small carbon-footprint adjustment.
 
-    # Carbon footprint adjustment (lower footprint gets slight bonus)
-    co2 = material.get("carbon_footprint_kg_co2_per_kg")
-    if co2 is not None:
-        co2_val = float(co2)
-        if co2_val <= 1.5:
+    This is not a full life-cycle assessment.
+    """
+    recyclability_status = str(
+        material.get("recyclability_status", "")
+    ).strip()
+
+    base_score = RECYCLABILITY_SCORE_MAP.get(
+        recyclability_status, 40.0
+    )
+
+    co2 = _number(
+        material.get("carbon_footprint_kg_co2_per_kg")
+    )
+
+    if co2 is not None and co2 >= 0:
+        if co2 <= 1.5:
             base_score += 5.0
-        elif co2_val > 4.5:
+        elif co2 > 4.5:
             base_score -= 8.0
 
     return float(np.clip(base_score, 5.0, 100.0))
 
 
-def compute_mechanical_score(material: Dict[str, Any], commodity_profile: Dict[str, Any]) -> float:
-    """
-    Evaluates tensile strength, seal integrity, and puncture tolerance.
-    """
+def compute_mechanical_score(
+    material: Dict[str, Any],
+    commodity_profile: Dict[str, Any]
+) -> float:
+    """Compute a heuristic mechanical utility score."""
+
     score = 70.0
-    seal = str(material.get("seal_integrity_rating", "Good")).lower()
+
+    seal = _text(
+        material.get("seal_integrity_rating"), "unknown"
+    )
+
     if "excellent" in seal:
         score += 15.0
     elif "good" in seal:
         score += 8.0
     elif "fair" in seal:
         score -= 10.0
+    elif seal in {"poor", "low"}:
+        score -= 20.0
+    else:
+        score -= 10.0
 
-    punc = str(material.get("puncture_resistance", "Medium")).lower()
-    punc_req = str(commodity_profile.get("puncture_risk", "Low")).lower()
-    if punc_req in ["high", "very high"]:
-        if punc in ["very high", "high", "total"]:
+    punc = _text(
+        material.get("puncture_resistance"), "unknown"
+    )
+    punc_req = _text(
+        commodity_profile.get("puncture_risk"), "low"
+    )
+
+    if punc_req in {"high", "very high"}:
+        if punc in {"very high", "high", "total"}:
             score += 15.0
+        elif punc in {"medium", "moderate"}:
+            score -= 5.0
         else:
             score -= 20.0
 
-    tensile = material.get("tensile_strength_mpa")
-    if tensile is not None and float(tensile) >= 100.0:
+    tensile = _number(material.get("tensile_strength_mpa"))
+
+    if tensile is not None and tensile >= 100.0:
         score += 5.0
+    elif tensile is None:
+        score -= 5.0
 
     return float(np.clip(score, 10.0, 100.0))
 
@@ -258,141 +519,345 @@ def rank_recommendations(
     weights: Optional[Dict[str, float]] = None
 ) -> Dict[str, Any]:
     """
-    Executes complete recommendation pipeline:
-    1. Filter knockouts
-    2. Normalize cost index
-    3. Multi-criteria utility scoring
-    4. Top candidates extraction & explainability breakdown
+    Run screening, score qualified materials, and return transparent
+    ranked candidates.
+
+    Default weights sum to 1.0:
+    barrier 0.40, cost 0.20, sustainability 0.25, mechanical 0.15.
     """
     if weights is None:
-        weights = {"barrier": 0.45, "cost": 0.25, "sustainability": 0.30}
+        weights = {
+            "barrier": 0.40,
+            "cost": 0.20,
+            "sustainability": 0.25,
+            "mechanical": 0.15,
+        }
 
-    # Normalize user weights to sum to 1.0
-    w_sum = sum(weights.values()) or 1.0
-    w_barrier = weights.get("barrier", 0.45) / w_sum
-    w_cost = weights.get("cost", 0.25) / w_sum
-    w_sust = weights.get("sustainability", 0.30) / w_sum
+    criteria = (
+        "barrier",
+        "cost",
+        "sustainability",
+        "mechanical",
+    )
 
-    qualified_mats, knocked_out_mats = filter_knockouts(materials, commodity_profile)
+    clean_weights = {}
+    for criterion in criteria:
+        value = _number(weights.get(criterion), 0.0)
+        clean_weights[criterion] = max(0.0, value or 0.0)
+
+    weight_sum = sum(clean_weights.values())
+
+    if weight_sum <= 0:
+        clean_weights = {
+            "barrier": 0.40,
+            "cost": 0.20,
+            "sustainability": 0.25,
+            "mechanical": 0.15,
+        }
+        weight_sum = sum(clean_weights.values())
+
+    normalized_weights = {
+        key: value / weight_sum
+        for key, value in clean_weights.items()
+    }
+
+    qualified_mats, knocked_out_mats = filter_knockouts(
+        materials, commodity_profile
+    )
 
     if not qualified_mats:
         return {
             "top_candidates": [],
             "all_ranked": [],
             "knocked_out": knocked_out_mats,
-            "weights_used": {"barrier": w_barrier, "cost": w_cost, "sustainability": w_sust},
+            "weights_used": normalized_weights,
             "status": "NO_QUALIFIED_MATERIALS",
-            "message": "All evaluated materials were disqualified by hard physical, biological, or safety constraints."
+            "message": (
+                "No materials passed the configured screening rules. "
+                "Review knockout reasons and input data. Do not weaken "
+                "food-safety requirements just to obtain a result."
+            ),
+            "total_evaluated": len(materials),
+            "total_qualified": 0,
+            "total_knocked_out": len(knocked_out_mats),
+            "scoring_note": (
+                "Scores are heuristic decision-support estimates. "
+                "Missing criteria are excluded and remaining weights "
+                "are renormalized for each candidate."
+            ),
         }
 
-    # Determine cost bounds for normalization among qualified candidates
-    costs = [float(m.get("cost_index_usd_per_kg", 3.0)) for m in qualified_mats]
-    min_cost = min(costs)
-    max_cost = max(costs)
-    cost_range = max_cost - min_cost if max_cost > min_cost else 1.0
+    costs = [
+        _number(mat.get("cost_index_usd_per_kg"))
+        for mat in qualified_mats
+    ]
+    valid_costs = [value for value in costs if value is not None]
+
+    min_cost = min(valid_costs) if valid_costs else None
+    max_cost = max(valid_costs) if valid_costs else None
 
     scored_candidates = []
+
     for mat in qualified_mats:
-        b_score, b_details = compute_barrier_score(mat, commodity_profile)
-        s_score = compute_sustainability_score(mat)
-        m_score = compute_mechanical_score(mat, commodity_profile)
-
-        # Cost utility: Lower cost = higher score (0-100)
-        c_actual = float(mat.get("cost_index_usd_per_kg", 3.0))
-        c_score = 100.0 * (1.0 - ((c_actual - min_cost) / cost_range))
-
-        # Composite MCDA Total Utility Score
-        total_score = (
-            w_barrier * b_score +
-            w_cost * c_score +
-            w_sust * s_score
+        barrier_score, barrier_details = compute_barrier_score(
+            mat, commodity_profile
+        )
+        sustainability_score = compute_sustainability_score(mat)
+        mechanical_score = compute_mechanical_score(
+            mat, commodity_profile
         )
 
-        candidate = dict(mat)
-        candidate["barrier_score"] = round(b_score, 1)
-        candidate["cost_score"] = round(c_score, 1)
-        candidate["sustainability_score"] = round(s_score, 1)
-        candidate["mechanical_score"] = round(m_score, 1)
-        candidate["total_mcda_score"] = round(total_score, 1)
-        candidate["barrier_details"] = b_details
+        cost_actual = _number(mat.get("cost_index_usd_per_kg"))
 
-        # Generate transparent explainability payload
-        candidate["explanation"] = generate_explanation(candidate, commodity_profile)
+        if cost_actual is None or cost_actual < 0:
+            cost_score = None
+        elif min_cost is None or max_cost is None:
+            cost_score = None
+        elif max_cost == min_cost:
+            cost_score = 100.0
+        else:
+            cost_score = 100.0 * (
+                1.0 - (cost_actual - min_cost) / (max_cost - min_cost)
+            )
+
+        # Re-normalize weights across available criteria for each material.
+        # Missing cost is not silently treated as a cheap default.
+        available_scores = {
+            "barrier": barrier_score,
+            "cost": cost_score,
+            "sustainability": sustainability_score,
+            "mechanical": mechanical_score,
+        }
+
+        active_weight_sum = sum(
+            normalized_weights[key]
+            for key, value in available_scores.items()
+            if value is not None
+        )
+
+        if active_weight_sum > 0:
+            total_score = sum(
+                normalized_weights[key] * value
+                for key, value in available_scores.items()
+                if value is not None
+            ) / active_weight_sum
+        else:
+            total_score = 0.0
+
+        candidate = dict(mat)
+        candidate["barrier_score"] = round(barrier_score, 1)
+        candidate["cost_score"] = (
+            round(cost_score, 1)
+            if cost_score is not None
+            else None
+        )
+        candidate["sustainability_score"] = round(
+            sustainability_score, 1
+        )
+        candidate["mechanical_score"] = round(
+            mechanical_score, 1
+        )
+        candidate["total_mcda_score"] = round(
+            float(total_score), 1
+        )
+        candidate["barrier_details"] = barrier_details
+        candidate["scoring_weights_used"] = normalized_weights
+        candidate["missing_score_criteria"] = [
+            key for key, value in available_scores.items()
+            if value is None
+        ]
+        candidate["explanation"] = generate_explanation(
+            candidate, commodity_profile
+        )
 
         scored_candidates.append(candidate)
 
-    # Sort descending by total score
-    scored_candidates.sort(key=lambda x: x["total_mcda_score"], reverse=True)
+    scored_candidates.sort(
+        key=lambda item: item["total_mcda_score"],
+        reverse=True
+    )
 
-    # Assign rank numbers
-    for i, c in enumerate(scored_candidates):
-        c["rank"] = i + 1
-
-    top_candidates = scored_candidates[:3]
+    for index, candidate in enumerate(scored_candidates, start=1):
+        candidate["rank"] = index
 
     return {
-        "top_candidates": top_candidates,
+        "top_candidates": scored_candidates[:3],
         "all_ranked": scored_candidates,
         "knocked_out": knocked_out_mats,
-        "weights_used": {"barrier": w_barrier, "cost": w_cost, "sustainability": w_sust},
+        "weights_used": normalized_weights,
         "status": "SUCCESS",
         "total_evaluated": len(materials),
         "total_qualified": len(qualified_mats),
-        "total_knocked_out": len(knocked_out_mats)
+        "total_knocked_out": len(knocked_out_mats),
+        "scoring_note": (
+            "Scores are heuristic decision-support estimates. "
+            "Missing criteria are excluded and remaining weights "
+            "are renormalized for each candidate."
+        ),
     }
 
 
-def generate_explanation(candidate: Dict[str, Any], commodity_profile: Dict[str, Any]) -> Dict[str, Any]:
+def generate_explanation(
+    candidate: Dict[str, Any],
+    commodity_profile: Dict[str, Any]
+) -> Dict[str, Any]:
     """
-    Constructs a scientifically clear justification, satisfied requirements,
-    known technical limitations, and unmeasured data items.
+    Explain recorded data, limitations, and missing information.
+    Avoid asserting that unverified requirements have been satisfied.
     """
     name = candidate.get("name", "Material")
-    b_score = candidate.get("barrier_score", 0.0)
-    wvtr = candidate.get("wvtr_g_m2_day")
-    otr = candidate.get("otr_cc_m2_day_atm")
-    cost = candidate.get("cost_index_usd_per_kg")
-    recyclability = candidate.get("recyclability_status", "Unspecified")
+    barrier_score = candidate.get("barrier_score", 0.0)
+    sustainability_score = candidate.get(
+        "sustainability_score", 0.0
+    )
+    total_score = candidate.get("total_mcda_score")
+    recyclability = str(
+        candidate.get("recyclability_status", "Unspecified")
+    )
 
     requirements_met = []
     limitations = []
     missing_data = []
 
-    # Satisfied requirements
-    requirements_met.append(f"Water vapor transmission: {wvtr} g/m²/day under 38°C/90% RH standard test conditions.")
-    requirements_met.append(f"Oxygen transmission rate: {otr} cc/m²/day/atm under 23°C/0% RH.")
-    requirements_met.append(f"Food contact compliance: {candidate.get('food_contact_compliance', 'Compliant')}")
-    requirements_met.append(f"Thermal tolerance verified across range: {candidate.get('temp_range_min_c')}°C to {candidate.get('temp_range_max_c')}°C.")
+    wvtr = _number(candidate.get("wvtr_g_m2_day"))
+    otr = _number(candidate.get("otr_cc_m2_day_atm"))
+    cost = _number(candidate.get("cost_index_usd_per_kg"))
 
-    # Technical limitations & sustainability trade-offs
-    if "non-recyclable" in recyclability.lower() or "laminate" in recyclability.lower():
-        limitations.append("Multi-material composite structure inhibits mechanical reprocessing in standard domestic curbside recycling streams.")
-    if cost > 4.0:
-        limitations.append(f"Higher commercial cost index (${cost:.2f}/kg); represents a premium packaging tier.")
+    if wvtr is not None:
+        requirements_met.append(
+            f"Recorded WVTR: {wvtr} g/m²/day. "
+            "Verify the source and test conditions."
+        )
+    else:
+        missing_data.append("Water vapor transmission rate is missing.")
+
+    if otr is not None:
+        requirements_met.append(
+            f"Recorded OTR: {otr} cc/m²/day/atm. "
+            "Verify the source and test conditions."
+        )
+    else:
+        missing_data.append("Oxygen transmission rate is missing.")
+
+    compliance = candidate.get("food_contact_compliance")
+    if compliance is not None and str(compliance).strip():
+        requirements_met.append(
+            f"Recorded food-contact status: {compliance}. "
+            "This label alone does not establish independent "
+            "regulatory verification."
+        )
+    else:
+        missing_data.append("Food-contact compliance status is missing.")
+
+    t_min = candidate.get("temp_range_min_c")
+    t_max = candidate.get("temp_range_max_c")
+
+    if t_min is not None and t_max is not None:
+        requirements_met.append(
+            f"Listed temperature range: {t_min}°C to {t_max}°C. "
+            "Supporting test evidence should be confirmed."
+        )
+    else:
+        missing_data.append(
+            "Complete temperature-range data is missing."
+        )
+
+    if cost is None:
+        missing_data.append(
+            "Cost index is missing; cost was excluded from this "
+            "candidate's composite score."
+        )
+
+    if "non-recyclable" in recyclability.lower() or (
+        "laminate" in recyclability.lower()
+    ):
+        limitations.append(
+            "The listed structure may be difficult to recycle in "
+            "standard curbside systems; check local facilities."
+        )
+
+    if cost is not None and cost > 4.0:
+        limitations.append(
+            f"Higher recorded cost index (${cost:.2f}/kg); "
+            "confirm local supplier pricing."
+        )
+
     if "pla" in name.lower() or "bio" in name.lower():
-        limitations.append("High sensitivity to moisture and low thermal distortion temperature (<55°C); requires climate-controlled storage.")
+        limitations.append(
+            "Bio-based composition does not by itself guarantee "
+            "home compostability or suitable thermal performance."
+        )
+
     if "glass" in name.lower():
-        limitations.append("High gross tare weight significantly elevates transportation fuel consumption and carbon footprint.")
-    if "ldpe" in name.lower() and candidate.get("otr_cc_m2_day_atm", 0) > 4000:
-        limitations.append("High oxygen permeability makes monolayer film unsuitable for extended oxidation-sensitive storage.")
+        limitations.append(
+            "Glass can have higher transport weight; compare full "
+            "life-cycle impacts and reuse assumptions."
+        )
 
-    # Missing / unmeasured data checks (Transparent science)
+    if "ldpe" in name.lower() and otr is not None and otr > 4000:
+        limitations.append(
+            "The recorded OTR is high; suitability for oxygen-sensitive "
+            "foods needs product-specific validation."
+        )
+
     if candidate.get("co2tr_cc_m2_day_atm") is None:
-        missing_data.append("Carbon dioxide transmission rate (CO2TR) not empirically documented in current reference entry.")
-    if candidate.get("tensile_strength_mpa") is None:
-        missing_data.append("Tensile yield strength value not reported; mechanical safety factor cannot be fully verified.")
-    if candidate.get("carbon_footprint_kg_co2_per_kg") is None:
-        missing_data.append("Complete cradle-to-gate Life Cycle Assessment (LCA) carbon footprint data unavailable.")
+        missing_data.append(
+            "Carbon dioxide transmission rate (CO2TR) is not documented."
+        )
 
-    selection_rationale = (
-        f"{name} achieves a composite MCDA utility score of {candidate.get('total_mcda_score')}/100. "
-        f"It provides a barrier match score of {b_score}/100 and a circularity/sustainability rating of "
-        f"{candidate.get('sustainability_score')}/100 for '{commodity_profile.get('name', 'Selected Commodity')}'."
-    )
+    if candidate.get("tensile_strength_mpa") is None:
+        missing_data.append(
+            "Tensile strength is not documented."
+        )
+
+    if candidate.get("carbon_footprint_kg_co2_per_kg") is None:
+        missing_data.append(
+            "Cradle-to-gate carbon footprint data is unavailable; "
+            "the score is not a complete life-cycle assessment."
+        )
+
+    if not candidate.get("is_verified_experimental"):
+        missing_data.append(
+            "Independent experimental laboratory verification is not recorded; "
+            "values are handbook/literature baselines."
+        )
+
+    if not missing_data:
+        missing_data.append(
+            "Batch-specific certificate of analysis (CoA) and real-time shelf-life "
+            "validation data under actual logistics conditions are not documented."
+        )
+
+    if not limitations:
+        limitations.append(
+            "No additional rule-based limitation was flagged. "
+            "This does not mean the material is proven safe or optimal."
+        )
+
+    if not requirements_met:
+        requirements_met.append(
+            "No recorded baseline properties met the screening profile criteria."
+        )
+
+    if total_score is None:
+        rationale = (
+            f"{name} received a barrier score of {barrier_score}/100 "
+            f"and sustainability score of {sustainability_score}/100. "
+            "Validate the available data before making a final selection."
+        )
+    else:
+        rationale = (
+            f"{name} received a heuristic MCDA score of "
+            f"{total_score}/100, a barrier score of {barrier_score}/100, "
+            f"and a sustainability score of {sustainability_score}/100 "
+            f"for '{commodity_profile.get('name', 'Selected Commodity')}'. "
+            "These scores are comparative estimates, not safety "
+            "certification or experimental validation."
+        )
 
     return {
-        "rationale": selection_rationale,
+        "rationale": rationale,
         "requirements_met": requirements_met,
-        "limitations": limitations if limitations else ["No severe operational limitations flagged for current target scenario."],
-        "missing_data": missing_data if missing_data else ["All primary physical barrier attributes are documented."]
+        "limitations": limitations,
+        "missing_data": missing_data,
     }
