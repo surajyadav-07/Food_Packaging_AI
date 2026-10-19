@@ -168,3 +168,67 @@ def test_oxygen_ingress_never_negative():
         )
         if res.get("estimated_days") is not None:
             assert res["estimated_days"] >= 0.0, f"Failed for init={init_o2}, crit={crit_o2}: got {res['estimated_days']}"
+
+
+def test_estimate_combined_shelf_life_moisture_limiting():
+    """When moisture spoilage occurs before oxygen limit, moisture must be identified as limiting factor."""
+    res = shelf_life.estimate_combined_shelf_life(
+        wvtr_standard=15.0,  # High moisture transmission -> rapid moisture staling
+        otr_standard=0.5,    # Very high oxygen barrier -> slow oxygen ingress
+        package_surface_area_m2=0.04,
+        product_dry_weight_g=100.0,
+        initial_moisture_percent=2.0,
+        critical_moisture_percent=4.0,
+        headspace_volume_cc=100.0,
+        initial_headspace_o2_percent=0.5,
+        critical_headspace_o2_percent=3.0,
+        ambient_temp_c=25.0,
+        ambient_rh_percent=75.0
+    )
+    assert res["limiting_days"] > 0
+    assert "Moisture Absorption" in res["limiting_factor"]
+    assert res["secondary_days"] is not None
+    assert res["secondary_days"] > res["limiting_days"]
+
+
+def test_estimate_combined_shelf_life_oxygen_limiting():
+    """When oxygen limit is reached first, oxygen ingress must be identified as limiting factor."""
+    res = shelf_life.estimate_combined_shelf_life(
+        wvtr_standard=0.1,    # High moisture barrier
+        otr_standard=50.0,   # Moderate oxygen permeability
+        package_surface_area_m2=0.04,
+        product_dry_weight_g=100.0,
+        initial_moisture_percent=2.0,
+        critical_moisture_percent=10.0,
+        headspace_volume_cc=100.0,
+        initial_headspace_o2_percent=0.5,
+        critical_headspace_o2_percent=2.5,
+        ambient_temp_c=25.0,
+        ambient_rh_percent=50.0
+    )
+    assert res["limiting_days"] > 0
+    assert "Oxygen Ingress" in res["limiting_factor"]
+    assert res["secondary_days"] is not None
+    assert res["secondary_days"] > res["limiting_days"]
+
+
+
+def test_estimate_combined_shelf_life_structure_and_disclaimer():
+    """Combined shelf life return dict must contain honest scientific disclaimer and valid keys."""
+    res = shelf_life.estimate_combined_shelf_life(
+        wvtr_standard=2.0,
+        otr_standard=25.0,
+        package_surface_area_m2=0.04,
+        product_dry_weight_g=150.0,
+        initial_moisture_percent=2.0,
+        critical_moisture_percent=5.0,
+        headspace_volume_cc=120.0,
+        ambient_temp_c=23.0
+    )
+    assert "limiting_days" in res
+    assert "limiting_factor" in res
+    assert "scientific_disclaimer" in res
+    assert "Fickian diffusion" in res["scientific_disclaimer"]
+    assert "moisture_result" in res
+    assert "oxygen_result" in res
+

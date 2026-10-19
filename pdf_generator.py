@@ -374,6 +374,21 @@ def generate_recommendation_pdf(
 
             story.append(KeepTogether(candidate_elements))
 
+        # Comparative Tradeoff Analysis
+        tradeoffs = recommendation_result.get("leading_tradeoffs", {})
+        if tradeoffs and tradeoffs.get("headline"):
+            to_elements = [
+                Paragraph(f"<b>Comparative Trade-off Analysis: {tradeoffs.get('headline')}</b>", h2_style),
+                Paragraph(f"<i>{tradeoffs.get('verdict', '')}</i>", body_style),
+                Spacer(1, 4)
+            ]
+            for adv in tradeoffs.get("advantages", []):
+                to_elements.append(Paragraph(f"<b>Advantage:</b> {adv}", bullet_style))
+            for conc in tradeoffs.get("concessions", []):
+                to_elements.append(Paragraph(f"<b>Trade-off:</b> {conc}", bullet_style))
+            to_elements.append(Spacer(1, 8))
+            story.append(KeepTogether(to_elements))
+
     # 5. Section: Side-by-Side Comparison Table
     story.append(Paragraph("4. Side-by-Side Material Properties Comparison", h1_style))
 
@@ -390,15 +405,17 @@ def generate_recommendation_pdf(
     comp_table_rows = [comp_headers]
 
     for cand in top_candidates:
+        cost_val = cand.get("cost_index_usd_per_kg")
+        cost_display = f"${cost_val:.2f}" if cost_val is not None else "Unreported"
         comp_table_rows.append([
-            Paragraph(f"#{cand.get('rank')}", body_bold),
+            Paragraph(f"#{cand.get('rank', '-')}", body_bold),
             Paragraph(cand.get("name", ""), body_style),
-            Paragraph(f"{cand.get('nominal_thickness_um')} µm", body_style),
-            Paragraph(str(cand.get("wvtr_g_m2_day")), body_style),
-            Paragraph(str(cand.get("otr_cc_m2_day_atm")), body_style),
-            Paragraph(f"${cand.get('cost_index_usd_per_kg'):.2f}", body_style),
-            Paragraph(f"<font size='7'>{cand.get('recyclability_status')}</font>", body_style),
-            Paragraph(f"<font size='6.5'>{cand.get('food_contact_compliance')}</font>", body_style)
+            Paragraph(f"{cand.get('nominal_thickness_um', '-')} µm", body_style),
+            Paragraph(str(cand.get("wvtr_g_m2_day", "-")), body_style),
+            Paragraph(str(cand.get("otr_cc_m2_day_atm", "-")), body_style),
+            Paragraph(cost_display, body_style),
+            Paragraph(f"<font size='7'>{cand.get('recyclability_status', '-')}</font>", body_style),
+            Paragraph(f"<font size='6.5'>{cand.get('food_contact_compliance', '-')}</font>", body_style)
         ])
 
     comp_summary_table = Table(comp_table_rows, colWidths=[30, 120, 45, 45, 45, 45, 95, 95])

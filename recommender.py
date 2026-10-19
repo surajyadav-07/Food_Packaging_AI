@@ -571,6 +571,7 @@ def rank_recommendations(
             "all_ranked": [],
             "knocked_out": knocked_out_mats,
             "weights_used": normalized_weights,
+            "leading_tradeoffs": {},
             "status": "NO_QUALIFIED_MATERIALS",
             "message": (
                 "No materials passed the configured screening rules. "
@@ -680,11 +681,17 @@ def rank_recommendations(
     for index, candidate in enumerate(scored_candidates, start=1):
         candidate["rank"] = index
 
+    top_candidates = scored_candidates[:3]
+    leading_tradeoffs = explain_top_pick_tradeoffs(
+        top_candidates[0], top_candidates[1:]
+    ) if len(top_candidates) > 0 else {}
+
     return {
-        "top_candidates": scored_candidates[:3],
+        "top_candidates": top_candidates,
         "all_ranked": scored_candidates,
         "knocked_out": knocked_out_mats,
         "weights_used": normalized_weights,
+        "leading_tradeoffs": leading_tradeoffs,
         "status": "SUCCESS",
         "total_evaluated": len(materials),
         "total_qualified": len(qualified_mats),
@@ -860,4 +867,176 @@ def generate_explanation(
         "requirements_met": requirements_met,
         "limitations": limitations,
         "missing_data": missing_data,
+    }
+
+
+POLYMER_DENSITIES_G_CM3 = {
+    "pp": 0.905,
+    "bopp": 0.905,
+    "ldpe": 0.92,
+    "hdpe": 0.95,
+    "pet": 1.38,
+    "rpet": 1.38,
+    "pla": 1.25,
+    "nylon": 1.14,
+    "bopa": 1.14,
+    "cellulose": 1.45,
+    "natureflex": 1.45,
+    "paper": 0.80,
+    "paperboard": 0.80,
+    "aluminium": 2.70,
+    "aluminum": 2.70,
+    "foil": 1.70,
+    "glass": 2.50,
+}
+
+
+def get_material_density(material: Dict[str, Any]) -> float:
+    """Estimates physical material density in g/cm3 for packaging mass estimation."""
+    poly_code = _text(material.get("polymer_code"))
+    name = _text(material.get("name"))
+    structure = _text(material.get("structure_type"))
+
+    for key, density in POLYMER_DENSITIES_G_CM3.items():
+        if key in poly_code or key in name or key in structure:
+            return density
+    return 1.15
+
+
+def calculate_unit_packaging_economics(
+    material: Dict[str, Any],
+    package_surface_area_cm2: float = 400.0,
+    monthly_volume: int = 50000
+) -> Dict[str, Any]:
+    """
+    Computes first-principles package piece mass, unit cost, and annualized economics.
+
+    Mass = Surface Area (cm2) * Thickness (cm) * Density (g/cm3)
+    """
+    thickness_um = _number(material.get("nominal_thickness_um"), 40.0) or 40.0
+    density = get_material_density(material)
+    cost_per_kg = _number(material.get("cost_index_usd_per_kg"))
+    co2_per_kg = _number(material.get("carbon_footprint_kg_co2_per_kg"))
+
+    thickness_cm = thickness_um / 10000.0
+    unit_mass_g = package_surface_area_cm2 * thickness_cm * density
+
+    unit_cost_usd = (unit_mass_g / 1000.0 * cost_per_kg) if cost_per_kg is not None else None
+    annual_spend_usd = (unit_cost_usd * monthly_volume * 12.0) if unit_cost_usd is not None else None
+
+    unit_co2_kg = (unit_mass_g / 1000.0 * co2_per_kg) if co2_per_kg is not None else None
+    annual_co2_kg = (unit_co2_kg * monthly_volume * 12.0) if unit_co2_kg is not None else None
+
+    return {
+        "material_name": material.get("name", "Material"),
+        "density_g_cm3": round(density, 2),
+        "nominal_thickness_um": thickness_um,
+        "unit_mass_grams": round(float(unit_mass_g), 2),
+        "unit_cost_usd": round(float(unit_cost_usd), 4) if unit_cost_usd is not None else None,
+        "cost_per_thousand_usd": round(float(unit_cost_usd * 1000.0), 2) if unit_cost_usd is not None else None,
+        "annual_spend_usd": round(float(annual_spend_usd), 2) if annual_spend_usd is not None else None,
+        "unit_carbon_kg_co2": round(float(unit_co2_kg), 4) if unit_co2_kg is not None else None,
+        "annual_carbon_kg_co2": round(float(annual_co2_kg), 1) if annual_co2_kg is not None else None,
+        "package_surface_area_cm2": package_surface_area_cm2,
+        "monthly_volume": monthly_volume
+    }
+
+
+def explain_top_pick_tradeoffs(
+    top_candidate: Dict[str, Any],
+    alternatives: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """
+    Generates comparative insights explaining why the leading recommendation
+    ranked higher than runner-up alternatives.
+    """
+    if not top_candidate:
+        return {
+            "headline": "No candidates qualified under the configured screening constraints.",
+            "advantages": [],
+            "concessions": [],
+            "verdict": "Adjust temperature, shelf-life, or compliance screening thresholds to evaluate candidates."
+        }
+
+    top_name = top_candidate.get("name", "Rank #1 Material")
+    top_score = top_candidate.get("total_mcda_score", 0.0)
+    top_b = top_candidate.get("barrier_score", 0.0)
+    top_c = top_candidate.get("cost_score")
+    top_s = top_candidate.get("sustainability_score", 0.0)
+    top_m = top_candidate.get("mechanical_score", 0.0)
+    top_wvtr = top_candidate.get("wvtr_g_m2_day")
+    top_otr = top_candidate.get("otr_cc_m2_day_atm")
+    top_cost_val = top_candidate.get("cost_index_usd_per_kg")
+
+    advantages = []
+    concessions = []
+
+    if alternatives:
+        runner_up = alternatives[0]
+        alt_name = runner_up.get("name", "Runner-up")
+        alt_score = runner_up.get("total_mcda_score", 0.0)
+        alt_b = runner_up.get("barrier_score", 0.0)
+        alt_c = runner_up.get("cost_score")
+        alt_s = runner_up.get("sustainability_score", 0.0)
+        alt_wvtr = runner_up.get("wvtr_g_m2_day")
+        alt_otr = runner_up.get("otr_cc_m2_day_atm")
+        alt_cost_val = runner_up.get("cost_index_usd_per_kg")
+
+        score_margin = round(float(top_score - alt_score), 1)
+        headline = f"Why {top_name} Ranks #{top_candidate.get('rank', 1)} (+{score_margin} pts above {alt_name})"
+
+        # Barrier comparison
+        if top_b > alt_b:
+            b_diff = round(top_b - alt_b, 1)
+            advantages.append(
+                f"Superior Barrier Protection (+{b_diff} pts): Recorded WVTR of {top_wvtr} g/m²/day vs {alt_wvtr} g/m²/day for {alt_name}."
+            )
+        elif alt_b > top_b:
+            concessions.append(
+                f"{alt_name} has higher barrier score ({alt_b}/100 vs {top_b}/100), but {top_name} compensates with cost and sustainability efficiency."
+            )
+
+        # Cost comparison
+        if top_c is not None and alt_c is not None:
+            if top_c > alt_c:
+                c_diff = round(top_c - alt_c, 1)
+                advantages.append(
+                    f"Higher Economic Utility (+{c_diff} pts): Listed at ${top_cost_val:.2f}/kg compared to ${alt_cost_val:.2f}/kg for {alt_name}."
+                )
+            elif alt_c > top_c:
+                concessions.append(
+                    f"{alt_name} is more economical (${alt_cost_val:.2f}/kg vs ${top_cost_val:.2f}/kg), representing a budget-focused alternative."
+                )
+
+        # Sustainability comparison
+        if top_s > alt_s:
+            s_diff = round(top_s - alt_s, 1)
+            advantages.append(
+                f"Circularity Advantage (+{s_diff} pts): Ranked for circular packaging compatibility ({top_candidate.get('recyclability_status', 'Standard')})."
+            )
+        elif alt_s > top_s:
+            concessions.append(
+                f"{alt_name} scored higher on circularity ({alt_s}/100 vs {top_s}/100), but lacks equivalent barrier performance."
+            )
+
+        # Mechanical comparison
+        if top_m > runner_up.get("mechanical_score", 0.0):
+            advantages.append(
+                f"Mechanical Resilience: Offers {top_candidate.get('seal_integrity_rating', 'Good')} seal integrity and {top_candidate.get('puncture_resistance', 'Medium')} puncture resistance."
+            )
+
+        verdict = (
+            f"{top_name} emerges as the optimal multi-criteria compromise with an overall utility of {top_score}/100, "
+            f"offering the most balanced trade-off across moisture protection, economic cost, and recycling feasibility."
+        )
+    else:
+        headline = f"Single Best Fit: {top_name}"
+        advantages.append(f"Achieves composite score of {top_score}/100 satisfying all critical screening thresholds.")
+        verdict = f"{top_name} is the sole material meeting all constraints for this food profile."
+
+    return {
+        "headline": headline,
+        "advantages": advantages,
+        "concessions": concessions,
+        "verdict": verdict
     }

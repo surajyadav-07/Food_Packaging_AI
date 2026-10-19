@@ -528,3 +528,92 @@ def test_explanation_accuracy_and_missing_data_warnings():
     assert any("Carbon dioxide transmission rate (CO2TR) is not documented" in m for m in expl["missing_data"])
     assert any("Tensile strength is not documented" in m for m in expl["missing_data"])
     assert any("carbon footprint data is unavailable" in m for m in expl["missing_data"])
+
+
+def test_calculate_unit_packaging_economics():
+    """Unit packaging economics must compute mass, unit cost, cost per thousand, and annual spend."""
+    mat = {
+        "name": "BOPP Film (30 µm)",
+        "polymer_type": "PP",
+        "structure_type": "Flexible Monolayer",
+        "nominal_thickness_um": 30.0,
+        "cost_index_usd_per_kg": 3.50,
+        "carbon_footprint_kg_co2_per_kg": 2.20
+    }
+    econ = recommender.calculate_unit_packaging_economics(
+        material=mat,
+        package_surface_area_cm2=400.0,
+        monthly_volume=20000
+    )
+    assert 0.90 <= econ["density_g_cm3"] <= 0.92  # BOPP / PP density
+    assert econ["unit_mass_grams"] > 0
+
+    # Mass = 400 cm2 * 0.0030 cm * 0.90 g/cm3 = 1.08 g
+    assert abs(econ["unit_mass_grams"] - 1.08) < 0.05
+    assert econ["unit_cost_usd"] > 0
+    # Cost = 1.08 g / 1000 * 3.50 $/kg = $0.00378
+    assert econ["cost_per_thousand_usd"] > 0
+    assert abs(econ["cost_per_thousand_usd"] - 3.78) < 0.2
+    assert econ["annual_spend_usd"] > 0
+    assert econ["unit_carbon_kg_co2"] > 0
+
+
+def test_calculate_unit_packaging_economics_missing_cost():
+    """When cost is None, unit cost and annual spend must be None without raising exceptions."""
+    mat = {
+        "name": "Experimental Bio-film",
+        "polymer_type": "PLA",
+        "nominal_thickness_um": 25.0,
+        "cost_index_usd_per_kg": None,
+        "carbon_footprint_kg_co2_per_kg": None
+    }
+    econ = recommender.calculate_unit_packaging_economics(
+        material=mat,
+        package_surface_area_cm2=300.0
+    )
+    assert econ["unit_mass_grams"] > 0
+    assert econ["unit_cost_usd"] is None
+    assert econ["cost_per_thousand_usd"] is None
+    assert econ["annual_spend_usd"] is None
+    assert econ["unit_carbon_kg_co2"] is None
+
+
+def test_explain_top_pick_tradeoffs():
+    """explain_top_pick_tradeoffs must produce comparative analysis contrasting #1 with runner-up."""
+    top_cand = {
+        "name": "Metallized BOPP",
+        "rank": 1,
+        "total_mcda_score": 86.5,
+        "barrier_score": 90.0,
+        "cost_score": 82.0,
+        "sustainability_score": 65.0,
+        "mechanical_score": 75.0,
+        "wvtr_g_m2_day": 0.5,
+        "otr_cc_m2_day_atm": 20.0,
+        "cost_index_usd_per_kg": 3.80,
+        "recyclability_status": "Specialized Stream",
+        "seal_integrity_rating": "Excellent",
+        "puncture_resistance": "Medium"
+    }
+    alt_cand = {
+        "name": "Standard LDPE Film",
+        "rank": 2,
+        "total_mcda_score": 72.0,
+        "barrier_score": 60.0,
+        "cost_score": 88.0,
+        "sustainability_score": 80.0,
+        "mechanical_score": 65.0,
+        "wvtr_g_m2_day": 15.0,
+        "otr_cc_m2_day_atm": 1500.0,
+        "cost_index_usd_per_kg": 2.50,
+        "recyclability_status": "Widely Recycled (PE Stream)",
+        "seal_integrity_rating": "Good",
+        "puncture_resistance": "Low"
+    }
+    tradeoffs = recommender.explain_top_pick_tradeoffs(top_cand, [alt_cand])
+    assert "Why Metallized BOPP" in tradeoffs["headline"]
+    assert len(tradeoffs["advantages"]) > 0
+    assert any("Barrier" in a for a in tradeoffs["advantages"])
+    assert len(tradeoffs["concessions"]) > 0
+    assert "verdict" in tradeoffs
+

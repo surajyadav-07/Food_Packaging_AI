@@ -195,3 +195,96 @@ def estimate_oxygen_ingress(
         "status": "SUCCESS",
         "gradient_direction": "inward"
     }
+
+
+def estimate_combined_shelf_life(
+    wvtr_standard: float,
+    otr_standard: float,
+    package_surface_area_m2: float,
+    product_dry_weight_g: float,
+    initial_moisture_percent: float,
+    critical_moisture_percent: float,
+    headspace_volume_cc: float,
+    initial_headspace_o2_percent: float = 0.5,
+    critical_headspace_o2_percent: float = 2.0,
+    ambient_temp_c: float = 23.0,
+    ambient_rh_percent: float = 60.0,
+    ambient_o2_percent: float = 21.0
+) -> Dict[str, Any]:
+    """
+    Evaluates coupled moisture absorption and oxygen ingress degradation mechanisms.
+
+    Determines the primary limiting degradation mode (first failure threshold reached),
+    conservative shelf-life estimate, and diagnostic comparison.
+    """
+    m_res = estimate_moisture_shelf_life(
+        wvtr_standard=wvtr_standard,
+        package_surface_area_m2=package_surface_area_m2,
+        product_dry_weight_g=product_dry_weight_g,
+        initial_moisture_percent=initial_moisture_percent,
+        critical_moisture_percent=critical_moisture_percent,
+        ambient_temp_c=ambient_temp_c,
+        ambient_rh_percent=ambient_rh_percent
+    )
+
+    o_res = estimate_oxygen_ingress(
+        otr_standard=otr_standard,
+        package_surface_area_m2=package_surface_area_m2,
+        headspace_volume_cc=headspace_volume_cc,
+        initial_headspace_o2_percent=initial_headspace_o2_percent,
+        critical_headspace_o2_percent=critical_headspace_o2_percent,
+        ambient_temp_c=ambient_temp_c,
+        ambient_o2_percent=ambient_o2_percent
+    )
+
+    m_days = m_res.get("estimated_days") if "error" not in m_res else None
+    o_days = o_res.get("estimated_days") if o_res.get("status") == "SUCCESS" else None
+
+    # Determine limiting degradation factor
+    if m_days is not None and o_days is not None:
+        if m_days < o_days:
+            limiting_days = m_days
+            limiting_factor = "Moisture Absorption (Texture Staling / Caking)"
+            secondary_days = o_days
+            secondary_factor = "Oxygen Ingress (Lipid Oxidation / Rancidity)"
+        elif o_days < m_days:
+            limiting_days = o_days
+            limiting_factor = "Oxygen Ingress (Lipid Oxidation / Rancidity)"
+            secondary_days = m_days
+            secondary_factor = "Moisture Absorption (Texture Staling / Caking)"
+        else:
+            limiting_days = m_days
+            limiting_factor = "Synchronous Degradation (Moisture & Oxygen Limits Reached Concurrently)"
+            secondary_days = o_days
+            secondary_factor = limiting_factor
+    elif m_days is not None:
+        limiting_days = m_days
+        limiting_factor = "Moisture Absorption (Texture Staling / Caking)"
+        secondary_days = None
+        secondary_factor = o_res.get("status", "Oxygen Model Inactive")
+    elif o_days is not None:
+        limiting_days = o_days
+        limiting_factor = "Oxygen Ingress (Lipid Oxidation / Rancidity)"
+        secondary_days = None
+        secondary_factor = m_res.get("error", "Moisture Model Inactive")
+    else:
+        limiting_days = 0.0
+        limiting_factor = "Simulation Undetermined (Check Moisture and Oxygen Thresholds)"
+        secondary_days = None
+        secondary_factor = None
+
+    return {
+        "limiting_days": round(float(limiting_days), 1) if limiting_days is not None else 0.0,
+        "limiting_factor": limiting_factor,
+        "secondary_days": round(float(secondary_days), 1) if secondary_days is not None else None,
+        "secondary_factor": secondary_factor,
+        "moisture_result": m_res,
+        "oxygen_result": o_res,
+        "ambient_temp_c": ambient_temp_c,
+        "ambient_rh_percent": ambient_rh_percent,
+        "scientific_disclaimer": (
+            "Model operates on steady-state Fickian diffusion with Arrhenius temperature scaling. "
+            "It estimates packaging barrier limitation only and does not model microbial proliferation, "
+            "enzymatic staling, or physical package punctures."
+        )
+    }

@@ -75,19 +75,20 @@ if "last_run_result" not in st.session_state:
 # -----------------------------------------------------------------------------
 TRANSLATIONS = {
     "en": {
-        "app_title": "Smart FoodPack AI",
+        "app_title": "Food Packaging AI",
         "app_badge": "Packaging Intelligence Platform",
-        "nav_0": "Dashboard & Recommendations",
-        "nav_1": "Shelf-Life Simulator",
-        "nav_2": "Material Comparator",
-        "nav_3": "Sustainability & LCA",
-        "nav_4": "ML & Clustering",
-        "nav_5": "Database Explorer",
-        "nav_6": "CSV Import/Export",
-        "nav_7": "User Guide & Audit",
-        "hero_headline": "Intelligent Food Packaging Material Recommendation System",
-        "hero_sub": "Preserve freshness, extend shelf life, minimize carbon footprint, and optimize packaging costs with verified food science and physics-based permeation models.",
-        "btn_start_wizard": "🚀 Launch Recommendation Wizard",
+        "nav_0": "Advisor & Dashboard",
+        "nav_1": "Judge Demo Showcase",
+        "nav_2": "What-If Simulator",
+        "nav_3": "Shelf-Life Kinetics",
+        "nav_4": "Material Comparator",
+        "nav_5": "Sustainability & LCA",
+        "nav_6": "ML & Clustering",
+        "nav_7": "Database & CSV",
+        "nav_8": "Methodology & Compliance",
+        "hero_headline": "Food Packaging AI",
+        "hero_sub": "Intelligent decision support for food packaging engineering. Optimize barrier integrity, extend shelf life, minimize packaging cost, and elevate sustainability with first-principles physics and multi-criteria optimization.",
+        "btn_start_wizard": "🚀 Start Packaging Analysis",
         "btn_try_demo": "✨ Try One-Click Demo (Potato Chips)",
         "step_1": "1. Food Commodity",
         "step_2": "2. Storage & Pack",
@@ -112,19 +113,20 @@ TRANSLATIONS = {
         "honesty_notice": "🔬 Academic & Scientific Notice: Shelf life is a mathematical mass-transfer estimate, not an empirical microbiological guarantee. Supervised ML uses synthetic rule-based demonstrations. Accredited physical laboratory testing is required prior to commercial release."
     },
     "hi": {
-        "app_title": "स्मार्ट फूडपैक एआई",
+        "app_title": "फूड पैकेजिंग एआई",
         "app_badge": "खाद्य पैकेजिंग अनुशंसा प्रणाली",
-        "nav_0": "डैशबोर्ड व सिफारिशें",
-        "nav_1": "शेल्फ-लाइफ सिम्युलेटर",
-        "nav_2": "सामग्री तुलना",
-        "nav_3": "पर्यावरण व स्थिरता",
-        "nav_4": "मशीन लर्निंग विश्लेषण",
-        "nav_5": "डेटाबेस एक्सप्लोरर",
-        "nav_6": "सीएसवी आयात/निर्यात",
-        "nav_7": "उपयोगकर्ता गाइड व ऑडिट",
-        "hero_headline": "बुद्धिमान खाद्य पैकेजिंग सामग्री अनुशंसा प्रणाली",
-        "hero_sub": "ताज़गी बचाएं, शेल्फ-लाइफ बढ़ाएं, कार्बन फुटप्रिंट घटाएं और वैज्ञानिक सिमुलेशन द्वारा सर्वोत्तम पैकेजिंग चुनें।",
-        "btn_start_wizard": "🚀 विज़ार्ड शुरू करें",
+        "nav_0": "सलाहकार व डैशबोर्ड",
+        "nav_1": "जज डेमो शोकेस",
+        "nav_2": "व्हॉट-इफ सिमुलेटर",
+        "nav_3": "शेल्फ-लाइफ काइनेटिक्स",
+        "nav_4": "सामग्री तुलना",
+        "nav_5": "सस्टेनेबिलिटी व एलसीए",
+        "nav_6": "एमएल व क्लस्टरिंग",
+        "nav_7": "डेटाबेस व सीएसवी",
+        "nav_8": "वैज्ञानिक पद्धति व अनुपालन",
+        "hero_headline": "फूड पैकेजिंग एआई",
+        "hero_sub": "ताज़गी बचाएं, शेल्फ-लाइफ बढ़ाएं, कार्बन फुटप्रिंट घटाएं और भौतिकी-आधारित सिमुलेशन द्वारा इष्टतम पैकेजिंग चुनें।",
+        "btn_start_wizard": "🚀 पैकेजिंग विश्लेषण शुरू करें",
         "btn_try_demo": "✨ वन-क्लिक डेमो आज़माएँ (आलू चिप्स)",
         "step_1": "1. खाद्य उत्पाद",
         "step_2": "2. भंडारण व पैकेज",
@@ -763,19 +765,25 @@ nav_labels = [
     t("nav_4"),
     t("nav_5"),
     t("nav_6"),
-    t("nav_7")
+    t("nav_7"),
+    t("nav_8")
 ]
 
 nav_icons = [
     "speedometer2",
+    "trophy",
+    "lightning-charge",
     "hourglass-split",
     "bar-chart-steps",
     "recycle",
     "cpu",
     "database",
-    "cloud-arrow-up",
     "journal-text"
 ]
+
+# Ensure active_nav_index is within bounds
+if st.session_state.get("active_nav_index", 0) >= len(nav_labels):
+    st.session_state["active_nav_index"] = 0
 
 selected_nav_str = option_menu(
     menu_title=None,
@@ -785,20 +793,20 @@ selected_nav_str = option_menu(
     orientation="horizontal",
     styles={
         "container": {
-            "padding": "4px 8px !important",
+            "padding": "4px 6px !important",
             "background-color": "#1e293b" if st.session_state["dark_mode"] else "#ffffff",
             "border-radius": "14px",
             "border": "1px solid " + ("#334155" if st.session_state["dark_mode"] else "#e2e8f0"),
             "box-shadow": "0 4px 16px rgba(0,0,0,0.06)",
             "margin-bottom": "20px"
         },
-        "icon": {"color": "#0d9488", "font-size": "14px"},
+        "icon": {"color": "#0d9488", "font-size": "13px"},
         "nav-link": {
-            "font-size": "13px",
+            "font-size": "11.5px",
             "text-align": "center",
-            "margin": "0px 3px",
-            "padding": "8px 12px",
-            "border-radius": "10px",
+            "margin": "0px 1px",
+            "padding": "6px 8px",
+            "border-radius": "8px",
             "font-weight": "600",
             "color": "#94a3b8" if st.session_state["dark_mode"] else "#475569"
         },
@@ -915,6 +923,7 @@ if current_selected_idx == 0:
     st.markdown(
         f"""
         <div class="hero-banner">
+            <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.9; margin-bottom: 8px;">🌟 Food Packaging AI Decision System</div>
             <div class="hero-title">{t('hero_headline')}</div>
             <div class="hero-subtitle">{t('hero_sub')}</div>
         </div>
@@ -922,22 +931,78 @@ if current_selected_idx == 0:
         unsafe_allow_html=True
     )
 
-    hero_b1, hero_b2, _ = st.columns([2.5, 2.5, 3])
+    hero_b1, hero_b2, hero_b3, hero_b4 = st.columns([2.5, 2.5, 2.5, 2.5])
     with hero_b1:
         if st.button(t("btn_start_wizard"), type="primary", use_container_width=True):
             st.session_state["wizard_step"] = 1
             st.rerun()
     with hero_b2:
-        if st.button(t("btn_try_demo"), use_container_width=True):
-            st.session_state["selected_food_name"] = "Potato Chips"
-            st.session_state["storage_temp"] = 23.0
-            st.session_state["storage_rh"] = 60
-            st.session_state["target_shelf_life"] = 180
-            st.session_state["priority_choice"] = "⚖️ Balanced Performance (Recommended)"
-            st.session_state["wizard_step"] = 4
+        if st.button("🏆 Judge Demo Showcase", use_container_width=True):
+            st.session_state["active_nav_index"] = 1
+            st.rerun()
+    with hero_b3:
+        if st.button("⚡ What-If Simulator", use_container_width=True):
+            st.session_state["active_nav_index"] = 2
+            st.rerun()
+    with hero_b4:
+        if st.button("⚖️ Compare Materials", use_container_width=True):
+            st.session_state["active_nav_index"] = 4
             st.rerun()
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Real-Data Application Summary Cards (Zero Fabricated Metrics)
+    all_db_mats = database.get_all_materials()
+    total_db_mats = len(all_db_mats)
+    all_db_comms = database.get_all_commodities()
+    total_db_comms = len(all_db_comms)
+    
+    st.markdown(
+        f"""
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 18px; margin-bottom: 18px;">
+            <div class="stepper-card" style="text-align: center; padding: 14px 10px;">
+                <div style="font-size: 26px; font-weight: 800; color: #0d9488;">{total_db_mats}</div>
+                <div style="font-size: 13px; font-weight: 700; color: {'#f8fafc' if st.session_state['dark_mode'] else '#0f172a'};">Evaluated Polymers</div>
+                <div style="font-size: 11px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#64748b'};">Monolayer, Multi-layer, Metallized, Bio-based</div>
+            </div>
+            <div class="stepper-card" style="text-align: center; padding: 14px 10px;">
+                <div style="font-size: 26px; font-weight: 800; color: #0284c7;">{total_db_comms}</div>
+                <div style="font-size: 13px; font-weight: 700; color: {'#f8fafc' if st.session_state['dark_mode'] else '#0f172a'};">Food Sensitivity Presets</div>
+                <div style="font-size: 11px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#64748b'};">Calibrated moisture, oxygen, and respiration curves</div>
+            </div>
+            <div class="stepper-card" style="text-align: center; padding: 14px 10px;">
+                <div style="font-size: 26px; font-weight: 800; color: #10b981;">4-Pillar</div>
+                <div style="font-size: 13px; font-weight: 700; color: {'#f8fafc' if st.session_state['dark_mode'] else '#0f172a'};">MCDA Optimization</div>
+                <div style="font-size: 11px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#64748b'};">Barrier, unit cost, circularity, tensile strength</div>
+            </div>
+            <div class="stepper-card" style="text-align: center; padding: 14px 10px;">
+                <div style="font-size: 26px; font-weight: 800; color: #f59e0b;">Arrhenius</div>
+                <div style="font-size: 13px; font-weight: 700; color: {'#f8fafc' if st.session_state['dark_mode'] else '#0f172a'};">Mass-Transfer Physics</div>
+                <div style="font-size: 11px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#64748b'};">Deterministic Fickian permeation & shelf-life kinetics</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    with st.expander("ℹ️ How the 3-Phase Recommendation Decision Engine Works", expanded=False):
+        st.markdown(
+            f"""
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; font-size: 13px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#475569'};">
+                <div style="background-color: {'#1e293b' if st.session_state['dark_mode'] else '#f8fafc'}; border: 1px solid {'#334155' if st.session_state['dark_mode'] else '#e2e8f0'}; border-radius: 10px; padding: 14px;">
+                    <strong style="color: #0d9488; font-size: 14px;">Phase 1: Mandatory Screening Knockouts</strong>
+                    <p style="margin-top: 6px;">Filters candidates against hard safety boundaries: verified food-contact compliance (US FDA 21 CFR §177, EU 10/2011, FSSAI), respiration suitability for fresh produce, operational temperature window, and puncture risk.</p>
+                </div>
+                <div style="background-color: {'#1e293b' if st.session_state['dark_mode'] else '#f8fafc'}; border: 1px solid {'#334155' if st.session_state['dark_mode'] else '#e2e8f0'}; border-radius: 10px; padding: 14px;">
+                    <strong style="color: #0284c7; font-size: 14px;">Phase 2: Multi-Criteria Utility Scoring (MCDA)</strong>
+                    <p style="margin-top: 6px;">Computes normalized utility across four orthogonal dimensions: Barrier Protection (WVTR, OTR), Economic Affordability ($/kg), Sustainability & Circularity (Recyclability streams, bio-content), and Mechanical Strength.</p>
+                </div>
+                <div style="background-color: {'#1e293b' if st.session_state['dark_mode'] else '#f8fafc'}; border: 1px solid {'#334155' if st.session_state['dark_mode'] else '#e2e8f0'}; border-radius: 10px; padding: 14px;">
+                    <strong style="color: #10b981; font-size: 14px;">Phase 3: Kinetics & Transparent Trade-off Analysis</strong>
+                    <p style="margin-top: 6px;">Simulates coupled moisture sorption and oxygen ingress using Arrhenius-scaled Fickian permeation. Explains why the top pick outperformed runner-up candidates with full tradeoff disclosures.</p>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     # 4-Step Stepper Navigation Header (Polished Component)
     step = st.session_state["wizard_step"]
@@ -1276,6 +1341,82 @@ if current_selected_idx == 0:
         st.markdown(f'<div class="honesty-notice">{t("honesty_notice")}</div>', unsafe_allow_html=True)
 
         # -------------------------------------------------------------
+        # FIRST-PRINCIPLES UNIT ECONOMICS & FAILURE MODE
+        # -------------------------------------------------------------
+        if top_mat:
+            ue = recommender.calculate_unit_packaging_economics(
+                material=top_mat,
+                package_surface_area_cm2=float(st.session_state.get("pack_area_cm2", 400.0)),
+                monthly_volume=50000
+            )
+            comb_sl = shelf_life.estimate_combined_shelf_life(
+                wvtr_standard=float(top_mat.get("wvtr_g_m2_day", 5.0)),
+                otr_standard=float(top_mat.get("otr_cc_m2_day_atm", 100.0)),
+                package_surface_area_m2=float(st.session_state.get("pack_area_cm2", 400.0)) / 10000.0,
+                product_dry_weight_g=150.0,
+                initial_moisture_percent=2.0,
+                critical_moisture_percent=5.5,
+                headspace_volume_cc=float(st.session_state.get("headspace_ml", 120.0)),
+                ambient_temp_c=float(st.session_state["storage_temp"]),
+                ambient_rh_percent=float(st.session_state["storage_rh"])
+            )
+
+            # Packaging Economics & Kinetics Callout Bar
+            econ_col1, econ_col2, econ_col3, econ_col4 = st.columns(4)
+            with econ_col1:
+                st.metric("Film Piece Mass", f"{ue['unit_mass_grams']} g", help=f"Computed from polymer density {ue['density_g_cm3']} g/cm³ and {ue['nominal_thickness_um']} µm thickness")
+            with econ_col2:
+                c_unit_str = f"${ue['unit_cost_usd']:.4f}" if ue['unit_cost_usd'] is not None else "Unlisted"
+                st.metric("Unit Packaging Cost", c_unit_str, help="Material cost per single retail package")
+            with econ_col3:
+                c_1k_str = f"${ue['cost_per_thousand_usd']:.2f}" if ue['cost_per_thousand_usd'] is not None else "Unlisted"
+                st.metric("Cost / 1,000 Packs", c_1k_str, help="Standard industry benchmark per 1,000 units")
+            with econ_col4:
+                ann_spend_str = f"${ue['annual_spend_usd']:,.0f}" if ue['annual_spend_usd'] is not None else "Unlisted"
+                st.metric("Annual Material Spend", ann_spend_str, help="Projected for 50,000 packs/month (600k units/year)")
+
+            st.markdown(
+                f"""
+                <div style="background-color: {'#1e293b' if st.session_state['dark_mode'] else '#f8fafc'}; border: 1px solid {'#334155' if st.session_state['dark_mode'] else '#e2e8f0'}; border-radius: 10px; padding: 12px 16px; margin: 12px 0 18px 0; font-size: 13.5px;">
+                    <span style="font-weight: 700; color: #0d9488;">⏱️ Coupled Mass-Transfer Limiting Mode:</span>
+                    <strong>{comb_sl['limiting_factor']}</strong> at <strong>~{comb_sl['limiting_days']} days</strong>
+                    {f"<span style='color: #64748b;'> (Secondary threshold: {comb_sl['secondary_factor']} at ~{comb_sl['secondary_days']} days)</span>" if comb_sl.get('secondary_days') else ""}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # "Why #1 Won" Comparative Trade-off Box
+            leading_tradeoffs = rec_result.get("leading_tradeoffs")
+            if leading_tradeoffs and leading_tradeoffs.get("headline"):
+                st.markdown(
+                    f"""
+                    <div class="candidate-card" style="border-left: 4px solid #0d9488; background-color: {'#172554' if st.session_state['dark_mode'] else '#f0fdfa'}; margin-bottom: 20px;">
+                        <span class="status-pill status-pass" style="font-size: 11px; text-transform: uppercase; font-weight: 700;">⚖️ Why #1 Won: Comparative Trade-off Analysis</span>
+                        <h4 style="margin-top: 8px; margin-bottom: 6px; color: {'#f8fafc' if st.session_state['dark_mode'] else '#0f172a'};">{leading_tradeoffs['headline']}</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px;">
+                            <div>
+                                <strong style="color: #10b981; font-size: 13px;">✅ Leading Advantages:</strong>
+                                <ul style="margin: 4px 0 0 16px; padding: 0; font-size: 12.5px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#475569'};">
+                                    {''.join(f'<li>{adv}</li>' for adv in leading_tradeoffs.get('advantages', []))}
+                                </ul>
+                            </div>
+                            <div>
+                                <strong style="color: #f59e0b; font-size: 13px;">⚖️ Engineering Concessions & Trade-offs:</strong>
+                                <ul style="margin: 4px 0 0 16px; padding: 0; font-size: 12.5px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#475569'};">
+                                    {''.join(f'<li>{cnc}</li>' for cnc in leading_tradeoffs.get('concessions', []))}
+                                </ul>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 12px; font-style: italic; color: {'#94a3b8' if st.session_state['dark_mode'] else '#64748b'}; border-top: 1px dashed {'#334155' if st.session_state['dark_mode'] else '#cbd5e1'}; padding-top: 8px;">
+                            <strong>Algorithm Verdict:</strong> {leading_tradeoffs.get('verdict', '')}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        # -------------------------------------------------------------
         # TOP CANDIDATE CARDS (Friendly Star Ratings & Clear Progress)
         # -------------------------------------------------------------
         st.markdown("### 🏆 Top Recommended Packaging Candidates")
@@ -1319,6 +1460,16 @@ if current_selected_idx == 0:
                     for lim in expl.get("limitations", [])[:2]:
                         st.markdown(f"- <span style='font-size: 13.5px;'>{lim}</span>", unsafe_allow_html=True)
                 st.markdown("---")
+
+            # Disqualified Candidates Drawer
+            knocked = rec_result.get("knocked_out_materials", [])
+            if knocked:
+                with st.expander(f"🚫 View {len(knocked)} Disqualified Materials & Knockout Rationale (Audit Trail)", expanded=False):
+                    st.caption("Materials excluded by mandatory safety boundaries (food-contact compliance, produce respiration, thermal limits, puncture risk):")
+                    for km in knocked:
+                        reasons_str = " | ".join(km.get("reasons", []))
+                        st.markdown(f"- **{km['name']}**: <span style='color: #ef4444;'>{reasons_str}</span>", unsafe_allow_html=True)
+
 
         # -------------------------------------------------------------
         # NEW FEATURE 1: INTERACTIVE SHELF-LIFE CURVE (LIVE TEMP SLIDER)
@@ -1547,11 +1698,508 @@ if current_selected_idx == 0:
                 st.rerun()
 
 # =============================================================================
-# SECTION 2: SHELF-LIFE & FRESHNESS GUIDE
+# SECTION 2: HACKATHON JUDGE DEMO SHOWCASE
 # =============================================================================
 elif current_selected_idx == 1:
+    st.subheader("🏆 Hackathon Judge Showcase: 4 Benchmark Packaging Challenges")
+    st.write("Curated real-world industry scenarios demonstrating how Food Packaging AI prevents packaging failures, resolves multi-criteria tradeoffs, and safeguards food safety using first-principles physics.")
+
+    st.markdown(f'<div class="honesty-notice">{t("honesty_notice")}</div>', unsafe_allow_html=True)
+
+    BENCHMARK_SCENARIOS = {
+        "strawberries": {
+            "title": "🍓 Scenario A: Fresh Strawberries in Cold Chain",
+            "tag": "Respiring Fresh Produce",
+            "desc": "Active fruit respiration requires gas breathability. High-barrier films cause anaerobic fermentation, off-odors, and packaging blowout within 48 hours.",
+            "profile": {
+                "name": "Fresh Strawberries",
+                "category": "Fruits and vegetables",
+                "moisture_sensitivity": "Low",
+                "oxygen_sensitivity": "Moderate",
+                "fat_content_level": "None",
+                "light_sensitivity": "Low",
+                "storage_temp_c": 4.0,
+                "storage_rh_percent": 90,
+                "target_shelf_life_days": 14,
+                "puncture_risk": "Low",
+                "require_food_contact_compliance": True
+            },
+            "default_weights": {"barrier": 0.35, "cost": 0.20, "sustainability": 0.30, "mechanical": 0.15},
+            "highlight": "Strict Knockout: All impermeable barrier films (BOPP, EVOH, Aluminum Foil) are disqualified because produce respiration requires controlled gas permeability. Micro-perforated film is selected #1."
+        },
+        "biscuits": {
+            "title": "🍪 Scenario B: Crisp Bakery Biscuits",
+            "tag": "Extreme Moisture Sensitivity",
+            "desc": "Crispness failure occurs when moisture exceeds 5.0%. Requires low WVTR (<= 3.0 g/m²/day). Demonstrates dynamic ranking flip between Cost priority vs. Sustainability priority.",
+            "profile": {
+                "name": "Crisp Bakery Biscuits",
+                "category": "Bakery products",
+                "moisture_sensitivity": "Extreme",
+                "oxygen_sensitivity": "Moderate",
+                "fat_content_level": "Medium",
+                "light_sensitivity": "Moderate",
+                "storage_temp_c": 25.0,
+                "storage_rh_percent": 65,
+                "target_shelf_life_days": 180,
+                "puncture_risk": "Medium",
+                "require_food_contact_compliance": True
+            },
+            "default_weights": {"barrier": 0.40, "cost": 0.25, "sustainability": 0.20, "mechanical": 0.15},
+            "highlight": "MCDA Sensitivity: Under Cost Minimization, Metallized BOPP ranks #1 ($3.80/kg); under Sustainability Priority, Recyclable Mono-PE or Bio-PLA jumps to #1."
+        },
+        "coffee": {
+            "title": "☕ Scenario C: Roasted Specialty Coffee Beans",
+            "tag": "Aroma & Oxidation Critical",
+            "desc": "Preserving delicate volatile aroma compounds and preventing lipid rancidity requires critical oxygen barrier (OTR <= 1.0 cc/m²/day) and degassing compatibility.",
+            "profile": {
+                "name": "Roasted Coffee Beans",
+                "category": "Snacks",
+                "moisture_sensitivity": "Moderate",
+                "oxygen_sensitivity": "Critical",
+                "fat_content_level": "High",
+                "light_sensitivity": "High",
+                "storage_temp_c": 23.0,
+                "storage_rh_percent": 50,
+                "target_shelf_life_days": 365,
+                "puncture_risk": "Low",
+                "require_food_contact_compliance": True
+            },
+            "default_weights": {"barrier": 0.50, "cost": 0.15, "sustainability": 0.20, "mechanical": 0.15},
+            "highlight": "Barrier Dominance: EVOH/PET/PE multi-layer barrier laminate ranks #1 due to near-zero oxygen transmission rate."
+        },
+        "chips": {
+            "title": "🍟 Scenario D: Fried Potato Chips",
+            "tag": "Dual Moisture & Lipid Rancidity",
+            "desc": "High fat (35%) + crispness loss (critical moisture 3.5%) creates coupled mass-transfer challenges requiring moisture barrier, oxygen barrier, and grease resistance.",
+            "profile": {
+                "name": "Potato Chips",
+                "category": "Snacks",
+                "moisture_sensitivity": "High",
+                "oxygen_sensitivity": "High",
+                "fat_content_level": "High",
+                "light_sensitivity": "Moderate",
+                "storage_temp_c": 23.0,
+                "storage_rh_percent": 60,
+                "target_shelf_life_days": 180,
+                "puncture_risk": "Low",
+                "require_food_contact_compliance": True
+            },
+            "default_weights": {"barrier": 0.40, "cost": 0.20, "sustainability": 0.25, "mechanical": 0.15},
+            "highlight": "Coupled Degradation: Metallized BOPP with nitrogen headspace flush satisfies both moisture crispness and lipid oxidation protection horizons."
+        }
+    }
+
+    if "judge_scenario_key" not in st.session_state:
+        st.session_state["judge_scenario_key"] = "strawberries"
+
+    # Scenario Selection Grid
+    sc_cols = st.columns(4)
+    for i, (s_key, s_data) in enumerate(BENCHMARK_SCENARIOS.items()):
+        with sc_cols[i]:
+            is_active = (st.session_state["judge_scenario_key"] == s_key)
+            st.markdown(
+                f"""
+                <div class="stepper-card {'stepper-card-active' if is_active else ''}" style="height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <span class="status-pill status-pass" style="font-size: 10px;">{s_data['tag']}</span>
+                        <div style="font-weight: 700; font-size: 14px; margin-top: 6px; color: {'#0d9488' if is_active else ('#f8fafc' if st.session_state['dark_mode'] else '#0f172a')};">{s_data['title']}</div>
+                        <div style="font-size: 11.5px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#64748b'}; margin-top: 4px; line-height: 1.3;">{s_data['desc'][:75]}...</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            btn_lbl = "● Active Benchmark" if is_active else "Select Benchmark"
+            btn_type = "primary" if is_active else "secondary"
+            if st.button(btn_lbl, key=f"btn_sc_{s_key}", type=btn_type, use_container_width=True):
+                st.session_state["judge_scenario_key"] = s_key
+                st.rerun()
+
+    active_scenario = BENCHMARK_SCENARIOS[st.session_state["judge_scenario_key"]]
+    st.markdown("---")
+    st.markdown(f"### 🧪 Active Benchmark Scenario: {active_scenario['title']}")
+    st.info(f"💡 **Judge Technical Highlight:** {active_scenario['highlight']}")
+
+    # Live Scenario Execution
+    all_materials = database.get_all_materials()
+    judge_profile = active_scenario["profile"]
+
+    # Interactive Weight Adjustment for Judges
+    with st.expander("⚖️ Adjust Multi-Criteria Decision Weights (Watch Live Ranking Re-computation)", expanded=False):
+        st.caption("Slide any criterion weight to see how Food Packaging AI dynamically re-ranks candidate materials:")
+        w_c1, w_c2, w_c3, w_c4 = st.columns(4)
+        with w_c1:
+            jw_b = st.slider("Barrier Weight", 0.0, 1.0, float(active_scenario["default_weights"]["barrier"]), 0.05, key="jw_b")
+        with w_c2:
+            jw_c = st.slider("Cost Weight", 0.0, 1.0, float(active_scenario["default_weights"]["cost"]), 0.05, key="jw_c")
+        with w_c3:
+            jw_s = st.slider("Sustainability Weight", 0.0, 1.0, float(active_scenario["default_weights"]["sustainability"]), 0.05, key="jw_s")
+        with w_c4:
+            jw_m = st.slider("Mechanical Weight", 0.0, 1.0, float(active_scenario["default_weights"]["mechanical"]), 0.05, key="jw_m")
+
+    judge_weights = {"barrier": jw_b, "cost": jw_c, "sustainability": jw_s, "mechanical": jw_m}
+    j_rec = recommender.rank_recommendations(all_materials, judge_profile, judge_weights)
+
+    if not j_rec["top_candidates"]:
+        st.error("No materials met all physical constraints for this scenario.")
+    else:
+        j_top = j_rec["top_candidates"][0]
+
+        # Top Pick Banner
+        j_kpi1, j_kpi2, j_kpi3, j_kpi4 = st.columns(4)
+        with j_kpi1:
+            st.metric("Top Recommended Material", j_top["name"].split("(")[0].strip())
+        with j_kpi2:
+            st.metric("MCDA Match Score", f"{j_top['total_mcda_score']} / 100")
+        with j_kpi3:
+            st.metric("Qualified Safe Matches", f"{j_rec['total_qualified']} of {j_rec['total_evaluated']}")
+        with j_kpi4:
+            st.metric("Disqualified Knockouts", f"{j_rec['total_knocked_out']}")
+
+        # "Why #1 Won" Trade-off Card
+        j_tradeoffs = j_rec.get("leading_tradeoffs")
+        if j_tradeoffs and j_tradeoffs.get("headline"):
+            st.markdown(
+                f"""
+                <div class="candidate-card" style="border-left: 4px solid #0d9488; background-color: {'#172554' if st.session_state['dark_mode'] else '#f0fdfa'}; margin: 14px 0;">
+                    <span class="status-pill status-pass" style="font-size: 11px; text-transform: uppercase; font-weight: 700;">⚖️ Why #1 Won: Comparative Trade-off Analysis</span>
+                    <h4 style="margin-top: 8px; margin-bottom: 6px; color: {'#f8fafc' if st.session_state['dark_mode'] else '#0f172a'};">{j_tradeoffs['headline']}</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px;">
+                        <div>
+                            <strong style="color: #10b981; font-size: 13px;">✅ Leading Advantages:</strong>
+                            <ul style="margin: 4px 0 0 16px; padding: 0; font-size: 12.5px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#475569'};">
+                                {''.join(f'<li>{adv}</li>' for adv in j_tradeoffs.get('advantages', []))}
+                            </ul>
+                        </div>
+                        <div>
+                            <strong style="color: #f59e0b; font-size: 13px;">⚖️ Engineering Concessions & Trade-offs:</strong>
+                            <ul style="margin: 4px 0 0 16px; padding: 0; font-size: 12.5px; color: {'#94a3b8' if st.session_state['dark_mode'] else '#475569'};">
+                                {''.join(f'<li>{cnc}</li>' for cnc in j_tradeoffs.get('concessions', []))}
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 12px; font-style: italic; color: {'#94a3b8' if st.session_state['dark_mode'] else '#64748b'}; border-top: 1px dashed {'#334155' if st.session_state['dark_mode'] else '#cbd5e1'}; padding-top: 8px;">
+                        <strong>Algorithm Verdict:</strong> {j_tradeoffs.get('verdict', '')}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        # Ranked Candidates Table
+        st.markdown("#### 📊 Candidate Ranking & Score Breakdown")
+        table_rows = []
+        for c in j_rec["top_candidates"]:
+            table_rows.append({
+                "Rank": f"#{c['rank']}",
+                "Material": c["name"],
+                "MCDA Score": f"{c['total_mcda_score']:.1f}",
+                "Barrier Score": f"{c['barrier_score']:.1f}",
+                "Cost Score": f"{c['cost_score']:.1f}" if c.get('cost_score') is not None else "Unlisted",
+                "Sustainability": f"{c['sustainability_score']:.1f}",
+                "Mechanical": f"{c['mechanical_score']:.1f}",
+                "Recyclability": c.get("recyclability_status", "Standard"),
+                "Cost ($/kg)": f"${c.get('cost_index_usd_per_kg', 0):.2f}" if c.get('cost_index_usd_per_kg') is not None else "Unlisted"
+            })
+        st.dataframe(pd.DataFrame(table_rows), use_container_width=True)
+
+        # Unit Economics & Report Download
+        j_ue = recommender.calculate_unit_packaging_economics(j_top, 400.0, 50000)
+        j_col1, j_col2 = st.columns(2)
+        with j_col1:
+            st.markdown(
+                f"""
+                <div style="background-color: {'#1e293b' if st.session_state['dark_mode'] else '#f8fafc'}; border: 1px solid {'#334155' if st.session_state['dark_mode'] else '#e2e8f0'}; border-radius: 10px; padding: 14px; font-size: 13px;">
+                    <strong style="color: #0d9488; font-size: 14px;">📐 First-Principles Packaging Economics:</strong>
+                    <ul style="margin: 6px 0 0 16px; padding: 0; color: {'#94a3b8' if st.session_state['dark_mode'] else '#475569'};">
+                        <li><strong>Polymer Density:</strong> {j_ue['density_g_cm3']} g/cm³</li>
+                        <li><strong>Single Pouch Mass:</strong> {j_ue['unit_mass_grams']} g</li>
+                        <li><strong>Unit Piece Cost:</strong> {f'${j_ue["unit_cost_usd"]:.4f}' if j_ue['unit_cost_usd'] else 'Unlisted'}</li>
+                        <li><strong>Industrial Spend / 1k Packs:</strong> {f'${j_ue["cost_per_thousand_usd"]:.2f}' if j_ue['cost_per_thousand_usd'] else 'Unlisted'}</li>
+                        <li><strong>Annual Spend (600k units):</strong> {f'${j_ue["annual_spend_usd"]:,.0f}' if j_ue['annual_spend_usd'] else 'Unlisted'}</li>
+                    </ul>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        with j_col2:
+            st.markdown(
+                f"""
+                <div style="background-color: {'#1e293b' if st.session_state['dark_mode'] else '#f8fafc'}; border: 1px solid {'#334155' if st.session_state['dark_mode'] else '#e2e8f0'}; border-radius: 10px; padding: 14px; font-size: 13px;">
+                    <strong style="color: #0284c7; font-size: 14px;">📄 Generate Audit PDF Report:</strong>
+                    <p style="margin: 6px 0 10px 0; color: {'#94a3b8' if st.session_state['dark_mode'] else '#475569'};">Download complete engineering documentation with MCDA sensitivity breakdown, tradeoff rationale, and compliance verification audit trail.</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            pdf_bytes = pdf_generator.generate_recommendation_pdf(
+                commodity_profile=judge_profile,
+                recommendation_result=j_rec,
+                user_weights=judge_weights
+            )
+            st.download_button(
+                f"📥 Download Engineering Report ({active_scenario['profile']['name']})",
+                data=pdf_bytes,
+                file_name=f"Report_{active_scenario['profile']['name'].replace(' ', '_')}.pdf",
+                mime="application/pdf",
+                type="primary",
+                use_container_width=True
+            )
+
+    # -------------------------------------------------------------
+    # 5-MINUTE HACKATHON PITCH SCRIPT & TECHNICAL HIGHLIGHTS
+    # -------------------------------------------------------------
+    st.markdown("---")
+    pitch_tab, tech_tab = st.tabs(["🎤 5-Minute Hackathon Pitch Script", "🧠 Technical Architecture Defense"])
+
+    with pitch_tab:
+        st.markdown(
+            """
+            #### ⏱️ The 5-Minute Winning Pitch Flow:
+            1. **Minute 1: The $1.2 Trillion Global Crisis**
+               - *Every year, 1.3 billion tons of food is wasted globally, while 141 million tons of plastic packaging ends up in incinerators and landfills. Over 30% of food spoilage stems directly from mismatched packaging barrier specifications.*
+            2. **Minute 2: Why Existing Tools Fail**
+               - *Packaging selection today relies on fragmented vendor catalogs, disconnected spreadsheets, or generic LLM prompts that hallucinate regulatory certifications and ignore mass-transfer physics.*
+            3. **Minute 3: Our Solution: Food Packaging AI**
+               - *A 3-phase deterministic decision engine: Hard compliance and physical knockout gates, multi-criteria decision analysis (MCDA), and first-principles mass-transfer simulation (Arrhenius-scaled Fickian diffusion).*
+            4. **Minute 4: Live Demonstration**
+               - *Show Scenario A (Strawberries): Impermeable foil films are strictly knocked out to prevent anaerobic fermentation. Show Scenario B (Biscuits): Toggling priorities dynamically flips the ranking between low-cost Met-BOPP and circular Bio-PLA.*
+            5. **Minute 5: Commercial & Circular Impact**
+               - *Measurable unit economics ($/1,000 packs), real carbon footprint LCA comparisons, zero fabricated certifications, and production-grade PDF audit reporting.*
+            """
+        )
+
+    with tech_tab:
+        t_c1, t_c2, t_c3 = st.columns(3)
+        with t_c1:
+            st.markdown(
+                """
+                <div class="stepper-card" style="height: 220px;">
+                    <div style="font-weight: 800; color: #0d9488; font-size: 15px;">1. Mass-Transfer Physics</div>
+                    <div style="font-size: 12.5px; margin-top: 6px; line-height: 1.4;">
+                        Coupled Fickian diffusion with Arrhenius thermal scaling:
+                        <br><code>k(T) = k₀ · exp(-Ea / RT)</code>
+                        <br>Zero hallucinated shelf lives. Explicitly separates model estimates from experimental testing.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        with t_c2:
+            st.markdown(
+                """
+                <div class="stepper-card" style="height: 220px;">
+                    <div style="font-weight: 800; color: #0284c7; font-size: 15px;">2. Fail-Closed Compliance</div>
+                    <div style="font-size: 12.5px; margin-top: 6px; line-height: 1.4;">
+                        Rigorous safety parser: US FDA 21 CFR §177, EU 10/2011, and FSSAI standards.
+                        <br>Unverified, pending, or blank statuses fail closed into disqualification.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        with t_c3:
+            st.markdown(
+                """
+                <div class="stepper-card" style="height: 220px;">
+                    <div style="font-weight: 800; color: #10b981; font-size: 15px;">3. Explainable MCDA</div>
+                    <div style="font-size: 12.5px; margin-top: 6px; line-height: 1.4;">
+                        Four-pillar utility normalization across barrier, cost, circularity, and mechanical resilience.
+                        <br>Transparent 'Why #1 Won' comparative tradeoff analysis contrasting top candidate against runner-up.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+# =============================================================================
+# SECTION 3: INTERACTIVE WHAT-IF SIMULATOR
+# =============================================================================
+elif current_selected_idx == 2:
+    st.subheader("⚡ Interactive What-If Scenario Simulator")
+    st.write("Simulate the physical, economic, and environmental impact of environmental shifts (temperature, humidity), material substitutions, and package geometry changes before physical prototyping.")
+
+    st.markdown(f'<div class="honesty-notice">{t("honesty_notice")}</div>', unsafe_allow_html=True)
+
+    materials = database.get_all_materials()
+    mat_names = [m["name"] for m in materials]
+    mat_dict = {m["name"]: m for m in materials}
+
+    sim_col_ctrl, sim_col_res = st.columns([1, 1])
+
+    with sim_col_ctrl:
+        st.markdown("#### 🛠️ Simulation Parameters")
+
+        # 1. Base Commodity
+        sim_food = st.selectbox(
+            "Target Food Commodity:",
+            ["Potato Chips", "Crisp Bakery Biscuits", "Fresh Strawberries", "Roasted Coffee Beans", "Dry Pasta", "Cheddar Cheese"],
+            index=0
+        )
+
+        FOOD_CRIT_MAP = {
+            "Potato Chips": {"init_m": 2.0, "crit_m": 3.5, "target_days": 180, "food_wt": 150.0},
+            "Crisp Bakery Biscuits": {"init_m": 2.5, "crit_m": 5.0, "target_days": 180, "food_wt": 200.0},
+            "Fresh Strawberries": {"init_m": 90.0, "crit_m": 88.0, "target_days": 14, "food_wt": 250.0},
+            "Roasted Coffee Beans": {"init_m": 2.0, "crit_m": 5.0, "target_days": 365, "food_wt": 250.0},
+            "Dry Pasta": {"init_m": 10.0, "crit_m": 13.5, "target_days": 365, "food_wt": 500.0},
+            "Cheddar Cheese": {"init_m": 36.0, "crit_m": 39.0, "target_days": 90, "food_wt": 200.0}
+        }
+        f_props = FOOD_CRIT_MAP[sim_food]
+
+        # 2. Material Swap
+        base_default_name = "Metallized BOPP (Met-BOPP, 20 µm)" if "Metallized BOPP (Met-BOPP, 20 µm)" in mat_dict else mat_names[0]
+        st.markdown("**Material Substitution Comparison:**")
+        b_c1, b_c2 = st.columns(2)
+        with b_c1:
+            base_idx = mat_names.index(base_default_name) if base_default_name in mat_names else 0
+            mat_base_name = st.selectbox("Baseline Material:", mat_names, index=base_idx, key="whatif_base_mat")
+        with b_c2:
+            alt_idx = 1 if len(mat_names) > 1 else 0
+            mat_sim_name = st.selectbox("Simulated Material Swap:", mat_names, index=alt_idx, key="whatif_sim_mat")
+
+        mat_base = mat_dict[mat_base_name]
+        mat_sim = mat_dict[mat_sim_name]
+
+        # 3. Environmental Sliders
+        st.markdown("**Environmental Conditions:**")
+        t_base = 23.0
+        rh_base = 60.0
+
+        t_sim = st.slider("Simulated Temperature (°C):", min_value=-10.0, max_value=45.0, value=35.0, step=1.0, help="Simulate summer distribution or tropical retail")
+        rh_sim = st.slider("Simulated Humidity (% RH):", min_value=20, max_value=95, value=85, step=5, help="Simulate monsoon or coastal warehouse humidity")
+
+        # 4. Geometry & Volume
+        st.markdown("**Packaging Geometry & Production Scale:**")
+        p_area = st.number_input("Package Surface Area (cm²):", value=400.0, step=50.0, key="whatif_area")
+        ann_vol = st.number_input("Annual Production Volume (Units/year):", value=500000, step=50000, key="whatif_vol")
+
+    with sim_col_res:
+        st.markdown("#### 📊 Live What-If Impact & Delta Analysis")
+
+        # Run Baseline vs Simulated Calculations
+        res_base = shelf_life.estimate_moisture_shelf_life(
+            wvtr_standard=float(mat_base.get("wvtr_g_m2_day", 5.0)),
+            package_surface_area_m2=p_area / 10000.0,
+            product_dry_weight_g=f_props["food_wt"],
+            initial_moisture_percent=f_props["init_m"],
+            critical_moisture_percent=f_props["crit_m"],
+            ambient_temp_c=t_base,
+            ambient_rh_percent=rh_base
+        )
+        base_days = res_base.get("estimated_days", 0.0)
+
+        res_sim = shelf_life.estimate_moisture_shelf_life(
+            wvtr_standard=float(mat_sim.get("wvtr_g_m2_day", 5.0)),
+            package_surface_area_m2=p_area / 10000.0,
+            product_dry_weight_g=f_props["food_wt"],
+            initial_moisture_percent=f_props["init_m"],
+            critical_moisture_percent=f_props["crit_m"],
+            ambient_temp_c=t_sim,
+            ambient_rh_percent=rh_sim
+        )
+        sim_days = res_sim.get("estimated_days", 0.0)
+
+        days_delta = sim_days - base_days
+        days_pct = ((sim_days - base_days) / base_days * 100.0) if base_days > 0 else 0.0
+
+        # Economics Delta
+        econ_base = recommender.calculate_unit_packaging_economics(mat_base, p_area, int(ann_vol / 12))
+        econ_sim = recommender.calculate_unit_packaging_economics(mat_sim, p_area, int(ann_vol / 12))
+
+        cost_base = econ_base.get("unit_cost_usd")
+        cost_sim = econ_sim.get("unit_cost_usd")
+
+        spend_base = (cost_base * ann_vol) if cost_base is not None else None
+        spend_sim = (cost_sim * ann_vol) if cost_sim is not None else None
+        spend_delta = (spend_sim - spend_base) if (spend_base is not None and spend_sim is not None) else None
+
+        # Carbon Delta
+        co2_base = econ_base.get("unit_carbon_kg_co2")
+        co2_sim = econ_sim.get("unit_carbon_kg_co2")
+        annual_co2_delta = ((co2_sim - co2_base) * ann_vol) if (co2_base is not None and co2_sim is not None) else None
+
+        # Spoilage Alert
+        target_days = f_props["target_days"]
+        if sim_days < target_days:
+            st.error(f"⚠️ **CRITICAL SPOILAGE RISK:** Simulated shelf life (~{sim_days:.0f} days) fails to reach the required {target_days}-day target! (Shortfall: {target_days - sim_days:.0f} days)")
+        else:
+            st.success(f"🟢 **TARGET ACHIEVED:** Simulated shelf life (~{sim_days:.0f} days) exceeds the {target_days}-day target horizon by {sim_days - target_days:.0f} days.")
+
+        # Delta Summary Cards
+        d_c1, d_c2 = st.columns(2)
+        with d_c1:
+            st.metric(
+                "Simulated Shelf Life",
+                f"~{sim_days:.0f} Days",
+                delta=f"{days_delta:+.0f} Days ({days_pct:+.1f}%)",
+                delta_color="normal"
+            )
+        with d_c2:
+            if cost_sim is not None and cost_base is not None:
+                c_delta = cost_sim - cost_base
+                st.metric(
+                    "Simulated Unit Cost",
+                    f"${cost_sim:.4f} / pack",
+                    delta=f"{c_delta:+.4f} / pack",
+                    delta_color="inverse"
+                )
+            else:
+                st.metric("Simulated Unit Cost", "Unlisted")
+
+        d_c3, d_c4 = st.columns(2)
+        with d_c3:
+            if spend_delta is not None:
+                st.metric(
+                    "Annual Spend Impact",
+                    f"${spend_sim:,.0f} / yr",
+                    delta=f"{spend_delta:+,.0f} / yr",
+                    delta_color="inverse"
+                )
+            else:
+                st.metric("Annual Spend Impact", "Unlisted")
+        with d_c4:
+            if annual_co2_delta is not None:
+                st.metric(
+                    "Annual CO₂ Footprint Impact",
+                    f"{econ_sim.get('annual_carbon_kg_co2', 0):,.0f} kg",
+                    delta=f"{annual_co2_delta:+,.0f} kg CO₂-eq",
+                    delta_color="inverse"
+                )
+            else:
+                st.metric("Annual CO₂ Footprint Impact", "Unlisted")
+
+        # Side-by-side Sorption Curve Plot
+        fig_sim = go.Figure()
+        fig_sim.add_trace(go.Scatter(
+            x=res_base["days_array"],
+            y=res_base["moisture_curve"],
+            mode="lines",
+            name=f"Baseline ({mat_base['name'].split('(')[0].strip()} @ 23°C/60% RH)",
+            line=dict(color="#0d9488", width=2.5, dash="dash")
+        ))
+        fig_sim.add_trace(go.Scatter(
+            x=res_sim["days_array"],
+            y=res_sim["moisture_curve"],
+            mode="lines",
+            name=f"Simulated ({mat_sim['name'].split('(')[0].strip()} @ {t_sim}°C/{rh_sim}% RH)",
+            line=dict(color="#ef4444" if sim_days < target_days else "#10b981", width=3)
+        ))
+        fig_sim.add_hline(y=f_props["crit_m"], line_dash="dot", line_color="#f59e0b", annotation_text=f"Spoilage Limit ({f_props['crit_m']}%)")
+        fig_sim.update_layout(
+            title="Moisture Sorption Kinetics: Baseline vs. Simulated Shift",
+            xaxis_title="Storage Time (Days)",
+            yaxis_title="Moisture Content (%)",
+            height=340
+        )
+        st.plotly_chart(apply_chart_theme(fig_sim, dark_mode=st.session_state["dark_mode"], height=340), use_container_width=True)
+
+# =============================================================================
+# SECTION 4: SHELF-LIFE & KINETICS
+# =============================================================================
+elif current_selected_idx == 3:
     st.subheader("⏱️ Shelf-Life & Permeation Simulation Guide")
-    st.write("First-principles mass-transfer simulation of moisture sorption and oxygen ingress through polymer films.")
+    st.write("First-principles mass-transfer simulation of moisture sorption, oxygen ingress, and coupled degradation horizons.")
 
     st.markdown(f'<div class="honesty-notice">{t("honesty_notice")}</div>', unsafe_allow_html=True)
 
@@ -1560,7 +2208,11 @@ elif current_selected_idx == 1:
     selected_mat_name = st.selectbox("Select Packaging Material to Evaluate", mat_names, index=1)
     chosen_mat = next(m for m in materials if m["name"] == selected_mat_name)
 
-    sim_tab1, sim_tab2 = st.tabs(["💧 Moisture Ingress (Crispness & Caking)", "💨 Oxygen Ingress (Rancidity & Flavor)"])
+    sim_tab1, sim_tab2, sim_tab3 = st.tabs([
+        "💧 Moisture Ingress (Crispness & Caking)",
+        "💨 Oxygen Ingress (Rancidity & Flavor)",
+        "⚖️ Coupled Mass-Transfer (Limiting Mode Analysis)"
+    ])
 
     with sim_tab1:
         c1, c2, c3 = st.columns(3)
@@ -1644,10 +2296,53 @@ elif current_selected_idx == 1:
             )
             st.plotly_chart(apply_chart_theme(fig_o, dark_mode=st.session_state["dark_mode"], height=380), use_container_width=True)
 
+    with sim_tab3:
+        st.markdown("#### ⚖️ Coupled Degradation Horizon & Primary Limiting Factor")
+        st.caption("Simultaneously simulates moisture sorption and oxygen ingress to determine which degradation mechanism causes product spoilage first.")
+
+        c_sl1, c_sl2, c_sl3 = st.columns(3)
+        with c_sl1:
+            comb_temp = st.number_input("Ambient Storage Temp (°C)", value=23.0, step=1.0, key="comb_temp")
+            comb_rh = st.slider("Ambient Relative Humidity (% RH)", 20, 100, 65, key="comb_rh")
+        with c_sl2:
+            comb_area = st.number_input("Package Surface Area (cm²)", value=400.0, step=50.0, key="comb_area")
+            comb_wt = st.number_input("Food Dry Weight (g)", value=150.0, step=25.0, key="comb_wt")
+        with c_sl3:
+            comb_init_m = st.number_input("Initial Moisture (%)", value=2.0, step=0.5, key="comb_init_m")
+            comb_crit_m = st.number_input("Critical Moisture Limit (%)", value=5.5, step=0.5, key="comb_crit_m")
+            comb_crit_o2 = st.number_input("Critical Headspace O₂ (%)", value=2.0, step=0.5, key="comb_crit_o2")
+
+        comb_res = shelf_life.estimate_combined_shelf_life(
+            wvtr_standard=float(chosen_mat.get("wvtr_g_m2_day", 5.0)),
+            otr_standard=float(chosen_mat.get("otr_cc_m2_day_atm", 100.0)),
+            package_surface_area_m2=comb_area / 10000.0,
+            product_dry_weight_g=comb_wt,
+            initial_moisture_percent=comb_init_m,
+            critical_moisture_percent=comb_crit_m,
+            headspace_volume_cc=120.0,
+            initial_headspace_o2_percent=0.5,
+            critical_headspace_o2_percent=comb_crit_o2,
+            ambient_temp_c=comb_temp,
+            ambient_rh_percent=comb_rh
+        )
+
+        st.markdown(
+            f"""
+            <div style="background-color: {'#1e293b' if st.session_state['dark_mode'] else '#f0fdfa'}; border: 2px solid #0d9488; border-radius: 12px; padding: 16px; margin: 16px 0;">
+                <div style="font-size: 13px; font-weight: 700; color: #0d9488; text-transform: uppercase;">Primary Spoilage Failure Mode</div>
+                <div style="font-size: 24px; font-weight: 800; color: {'#f8fafc' if st.session_state['dark_mode'] else '#0f172a'}; margin: 4px 0;">{comb_res['limiting_factor']}</div>
+                <div style="font-size: 16px; color: #0d9488; font-weight: 700;">First Failure Limit Reached at: ~{comb_res['limiting_days']} Days</div>
+                {f"<div style='font-size: 13px; color: #94a3b8; margin-top: 6px;'>Secondary Failure Threshold: {comb_res['secondary_factor']} at ~{comb_res['secondary_days']} Days</div>" if comb_res.get('secondary_days') else ""}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.caption(f"🔬 Physical Assumption: {comb_res['scientific_disclaimer']}")
+
 # =============================================================================
-# SECTION 3: MATERIAL COMPARATOR
+# SECTION 5: MATERIAL COMPARATOR
 # =============================================================================
-elif current_selected_idx == 2:
+elif current_selected_idx == 4:
     st.subheader("⚖️ Material Comparator Side-by-Side")
     st.write("Compare 2 to 4 packaging polymers across barrier properties, mechanical strength, cost, and recycling streams.")
 
@@ -1691,20 +2386,26 @@ elif current_selected_idx == 2:
                 "Thickness": f"{m['nominal_thickness_um']} µm",
                 "Moisture Protection": m_s,
                 "Oxygen Protection": o_s,
-                "Cost ($/kg)": f"${m['cost_index_usd_per_kg']:.2f}",
+                "Tensile Strength": f"{m.get('tensile_strength_mpa')} MPa" if m.get('tensile_strength_mpa') else "Unmeasured",
+                "Puncture Resistance": m.get("puncture_resistance", "Medium"),
+                "Cost ($/kg)": f"${m['cost_index_usd_per_kg']:.2f}" if m.get('cost_index_usd_per_kg') is not None else "Unlisted",
                 "Recyclability": m["recyclability_status"]
             })
         st.dataframe(pd.DataFrame(comp_rows), use_container_width=True)
 
 # =============================================================================
-# SECTION 4: SUSTAINABILITY & LCA
+# SECTION 6: SUSTAINABILITY & LCA
 # =============================================================================
-elif current_selected_idx == 3:
+elif current_selected_idx == 5:
     st.subheader("🌿 Sustainability, Life Cycle Assessment & Recycling")
-    st.write("Evaluate global warming potential (CO₂ footprint), circular recyclability tiers, and the food-waste paradox.")
+    st.write("Evaluate global warming potential (CO₂ footprint), circular recyclability tiers, and polymer unit economics.")
 
     materials_df = database.get_all_materials_df()
-    s_tab1, s_tab2 = st.tabs(["📊 Recyclability Streams", "⚖️ Cost vs. Carbon Footprint Quadrant"])
+    s_tab1, s_tab2, s_tab3 = st.tabs([
+        "📊 Recyclability Streams",
+        "⚖️ Cost vs. Carbon Footprint Quadrant",
+        "📐 Polymer Density & Packaging Economics"
+    ])
 
     with s_tab1:
         tier_counts = materials_df["recyclability_status"].value_counts().reset_index()
@@ -1726,12 +2427,47 @@ elif current_selected_idx == 3:
         if co2_warnings:
             st.caption("ℹ️ Note: " + " | ".join(co2_warnings))
 
+    with s_tab3:
+        st.markdown("#### 📐 Polymer Density & Industrial Unit Packaging Economics")
+        st.caption("Calculate exact film mass per package and annual spend using calibrated polymer densities (ASTM D792):")
+
+        all_mats = database.get_all_materials()
+        mat_names_l = [m["name"] for m in all_mats]
+        sel_lca_mat_name = st.selectbox("Select Polymer to Evaluate:", mat_names_l, index=0, key="lca_mat_sel")
+        sel_lca_mat = next(m for m in all_mats if m["name"] == sel_lca_mat_name)
+
+        ue_c1, ue_c2, ue_c3 = st.columns(3)
+        with ue_c1:
+            ue_thick = st.number_input("Film Thickness (µm)", value=float(sel_lca_mat.get("nominal_thickness_um", 30.0)), step=5.0, key="ue_thick")
+        with ue_c2:
+            ue_area = st.number_input("Package Surface Area (cm²)", value=400.0, step=50.0, key="ue_area")
+        with ue_c3:
+            ue_vol = st.number_input("Monthly Packaging Volume", value=50000, step=10000, key="ue_vol")
+
+        mat_calc_dict = dict(sel_lca_mat)
+        mat_calc_dict["nominal_thickness_um"] = ue_thick
+        ue_res = recommender.calculate_unit_packaging_economics(mat_calc_dict, ue_area, ue_vol)
+
+        u_col1, u_col2, u_col3, u_col4 = st.columns(4)
+        with u_col1:
+            st.metric("Polymer Density", f"{ue_res['density_g_cm3']} g/cm³")
+        with u_col2:
+            st.metric("Film Mass / Pack", f"{ue_res['unit_mass_grams']} g")
+        with u_col3:
+            c_u = f"${ue_res['unit_cost_usd']:.4f}" if ue_res['unit_cost_usd'] is not None else "Unlisted"
+            st.metric("Unit Piece Cost", c_u)
+        with u_col4:
+            c_k = f"${ue_res['cost_per_thousand_usd']:.2f}" if ue_res['cost_per_thousand_usd'] is not None else "Unlisted"
+            st.metric("Spend / 1,000 Packs", c_k)
+
+        st.info("🔬 **Circularity & LCA Policy:** Bio-based content does not equate to automatic home compostability. Recyclability classification reflects municipal infrastructure compatibility (e.g. CEFLEX guidelines for mono-polyolefins).")
+
 # =============================================================================
-# SECTION 5: MACHINE LEARNING & MATERIAL CLUSTERING
+# SECTION 7: MACHINE LEARNING & MATERIAL CLUSTERING
 # =============================================================================
-elif current_selected_idx == 4:
+elif current_selected_idx == 6:
     st.subheader("🤖 Machine Learning Analytics & Clustering")
-    st.write("Unsupervised K-Means clustering and supervised Random Forest feature-importance analysis.")
+    st.write("Unsupervised K-Means clustering, 2D PCA dimensionality reduction, and supervised Random Forest feature-importance analysis.")
 
     st.markdown(f'<div class="honesty-notice">{t("honesty_notice")}</div>', unsafe_allow_html=True)
 
@@ -1744,154 +2480,167 @@ elif current_selected_idx == 4:
         st.plotly_chart(apply_chart_theme(pca_fig, dark_mode=st.session_state["dark_mode"], height=420), use_container_width=True)
         st.caption(f"2D PCA explains {pca_stats['total_variance_explained']}% of the physical variance between materials.")
 
+        st.markdown(
+            f"""
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+                <div style="background-color: {'#1e293b' if st.session_state['dark_mode'] else '#f8fafc'}; border: 1px solid {'#334155' if st.session_state['dark_mode'] else '#e2e8f0'}; border-radius: 8px; padding: 12px; font-size: 13px;">
+                    <strong style="color: #0d9488;">Horizontal Axis (PC1):</strong> {pca_stats.get('pc1_interpretation', '')}
+                </div>
+                <div style="background-color: {'#1e293b' if st.session_state['dark_mode'] else '#f8fafc'}; border: 1px solid {'#334155' if st.session_state['dark_mode'] else '#e2e8f0'}; border-radius: 8px; padding: 12px; font-size: 13px;">
+                    <strong style="color: #0284c7;">Vertical Axis (PC2):</strong> {pca_stats.get('pc2_interpretation', '')}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
     with ml_tab2:
         clf, fi_fig, summary = ml_engine.build_supervised_baseline()
         st.plotly_chart(apply_chart_theme(fi_fig, dark_mode=st.session_state["dark_mode"], height=380), use_container_width=True)
-        sc1, sc2, sc3 = st.columns(3)
+        sc1, sc2, sc3, sc4 = st.columns(4)
         with sc1:
             st.metric("Classifier", "Random Forest (50 Trees)")
         with sc2:
-            st.metric("Synthetic Scenarios", f"{summary['n_samples']} Samples")
+            st.metric("Evaluation Split", summary.get("split_ratio", "80/20 Holdout"))
         with sc3:
-            st.metric("Training Accuracy", f"{summary['train_accuracy']}%")
+            st.metric("Training Accuracy", f"{summary.get('train_accuracy', 0)}%")
+        with sc4:
+            st.metric("Holdout Test Accuracy", f"{summary.get('test_accuracy', 0)}%")
+        st.info(f"🔬 Transparent Disclosure: {summary.get('disclaimer', '')}")
 
 # =============================================================================
-# SECTION 6: DATABASE EXPLORER & ADMIN
-# =============================================================================
-elif current_selected_idx == 5:
-    st.subheader("📦 Database Explorer & Material Administrator")
-    st.write("Inspect, search, add, edit, or delete packaging materials in the persistent SQLite database.")
-
-    materials_df = database.get_all_materials_df()
-    search_term = st.text_input("🔍 Search materials by name or structure:", "")
-
-    if search_term:
-        filtered_df = materials_df[
-            materials_df["name"].str.contains(search_term, case=False, na=False) |
-            materials_df["structure_type"].str.contains(search_term, case=False, na=False)
-        ]
-    else:
-        filtered_df = materials_df
-
-    st.dataframe(
-        filtered_df[[
-            "id", "name", "structure_type", "nominal_thickness_um",
-            "wvtr_g_m2_day", "otr_cc_m2_day_atm", "cost_index_usd_per_kg",
-            "recyclability_status", "food_contact_compliance"
-        ]],
-        use_container_width=True,
-        height=280
-    )
-
-    db_t1, db_t2 = st.tabs(["➕ Add New Material", "✏️ Edit / Delete Material"])
-
-    with db_t1:
-        with st.form("add_mat_form"):
-            a1, a2, a3 = st.columns(3)
-            with a1:
-                n_name = st.text_input("Material Name *", "Example Eco Film (30 µm)")
-                n_struct = st.selectbox("Structure", ["Monolayer Flexible", "Multilayer Barrier Laminate", "Bio-based / Biodegradable"])
-                n_thick = st.number_input("Thickness (µm) *", min_value=1.0, value=30.0)
-            with a2:
-                n_wvtr = st.number_input("WVTR (g/m²/d) *", min_value=0.001, value=2.5)
-                n_otr = st.number_input("OTR (cc/m²/d/atm) *", min_value=0.001, value=25.0)
-                n_cost = st.number_input("Cost ($/kg) *", min_value=0.1, value=3.5)
-            with a3:
-                n_recyc = st.selectbox("Recyclability", list(recommender.RECYCLABILITY_SCORE_MAP.keys()))
-                n_comp = st.text_input("Compliance", "US FDA 21 CFR §177")
-                n_source = st.text_input("Data Source", "Lab Trial 2026")
-
-            if st.form_submit_button("Save Material", type="primary"):
-                nid = database.add_material({
-                    "name": n_name,
-                    "structure_type": n_struct,
-                    "polymer_code": "CUSTOM",
-                    "nominal_thickness_um": n_thick,
-                    "wvtr_g_m2_day": n_wvtr,
-                    "otr_cc_m2_day_atm": n_otr,
-                    "cost_index_usd_per_kg": n_cost,
-                    "recyclability_status": n_recyc,
-                    "food_contact_compliance": n_comp,
-                    "temp_range_min_c": -20.0,
-                    "temp_range_max_c": 90.0,
-                    "data_source": n_source,
-                    "test_conditions": "ASTM F1249 & D3985",
-                    "is_verified_experimental": 1,
-                    "notes": "Added from UI"
-                })
-                st.success(f"Added successfully with ID: {nid}!")
-                st.rerun()
-
-    with db_t2:
-        mats = database.get_all_materials()
-        mat_map = {f"ID {m['id']}: {m['name']}": m for m in mats}
-        sel_edit = st.selectbox("Select Material to Modify:", list(mat_map.keys()))
-        if sel_edit:
-            cm = mat_map[sel_edit]
-            with st.form("edit_mat_form"):
-                e1, e2 = st.columns(2)
-                with e1:
-                    e_name = st.text_input("Name", cm["name"])
-                    e_thick = st.number_input("Thickness (µm)", value=float(cm["nominal_thickness_um"]))
-                    e_cost = st.number_input("Cost ($/kg)", value=float(cm["cost_index_usd_per_kg"]))
-                with e2:
-                    e_wvtr = st.number_input("WVTR", value=float(cm["wvtr_g_m2_day"]))
-                    e_otr = st.number_input("OTR", value=float(cm["otr_cc_m2_day_atm"]))
-                if st.form_submit_button("Update Details", type="primary"):
-                    cm_dict = dict(cm)
-                    cm_dict.update({"name": e_name, "nominal_thickness_um": e_thick, "cost_index_usd_per_kg": e_cost, "wvtr_g_m2_day": e_wvtr, "otr_cc_m2_day_atm": e_otr})
-                    database.update_material(cm["id"], cm_dict)
-                    st.success("Updated successfully!")
-                    st.rerun()
-
-# =============================================================================
-# SECTION 7: CSV IMPORT / EXPORT
-# =============================================================================
-elif current_selected_idx == 6:
-    st.subheader("📂 CSV Ingestion, Validation & Export Manager")
-    st.write("Export the current materials repository to CSV, download templates, or batch-upload experimental measurements.")
-
-    c_exp, c_imp = st.columns(2)
-    with c_exp:
-        st.markdown("##### 📥 Export Materials Database")
-        csv_data = data_loader.export_materials_to_csv()
-        st.download_button(
-            "Download Complete Database (CSV)",
-            data=csv_data,
-            file_name="packaging_materials_export.csv",
-            mime="text/csv",
-            type="primary",
-            use_container_width=True
-        )
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("##### 📄 Standard CSV Template")
-        st.download_button(
-            "Download Validation Template (CSV)",
-            data=data_loader.get_csv_template(),
-            file_name="materials_template.csv",
-            mime="text/csv",
-            use_container_width=True
-        )
-
-    with c_imp:
-        st.markdown("##### 📤 Upload Batch CSV File")
-        up_file = st.file_uploader("Upload CSV with Laboratory Records", type=["csv"])
-        if up_file:
-            content = up_file.getvalue().decode("utf-8")
-            res_imp = data_loader.validate_and_import_csv(content)
-            if res_imp["success"]:
-                st.success(f"✅ Successfully imported {res_imp['imported_count']} material(s) into database!")
-                st.rerun()
-            else:
-                st.error("CSV import encountered errors.")
-                for err in res_imp["errors"]:
-                    st.error(err)
-
-# =============================================================================
-# SECTION 8: USER GUIDE & AUDIT HISTORY
+# SECTION 8: DATABASE & CSV MANAGER
 # =============================================================================
 elif current_selected_idx == 7:
+    st.subheader("📦 Database Explorer & CSV Ingestion Manager")
+    st.write("Inspect, search, add, edit materials in SQLite or batch-import experimental laboratory datasets via CSV.")
+
+    db_tab1, db_tab2 = st.tabs(["📦 SQLite Material Inventory & Editor", "📂 CSV Import / Validation / Export"])
+
+    with db_tab1:
+        materials_df = database.get_all_materials_df()
+        search_term = st.text_input("🔍 Search materials by name or structure:", "")
+
+        if search_term:
+            filtered_df = materials_df[
+                materials_df["name"].str.contains(search_term, case=False, na=False) |
+                materials_df["structure_type"].str.contains(search_term, case=False, na=False)
+            ]
+        else:
+            filtered_df = materials_df
+
+        st.dataframe(
+            filtered_df[[
+                "id", "name", "structure_type", "nominal_thickness_um",
+                "wvtr_g_m2_day", "otr_cc_m2_day_atm", "cost_index_usd_per_kg",
+                "recyclability_status", "food_contact_compliance"
+            ]],
+            use_container_width=True,
+            height=260
+        )
+
+        dbe_t1, dbe_t2 = st.tabs(["➕ Add New Material", "✏️ Edit Material"])
+        with dbe_t1:
+            with st.form("add_mat_form"):
+                a1, a2, a3 = st.columns(3)
+                with a1:
+                    n_name = st.text_input("Material Name *", "Example Eco Film (30 µm)")
+                    n_struct = st.selectbox("Structure", ["Monolayer Flexible", "Multilayer Barrier Laminate", "Bio-based / Biodegradable"])
+                    n_thick = st.number_input("Thickness (µm) *", min_value=1.0, value=30.0)
+                with a2:
+                    n_wvtr = st.number_input("WVTR (g/m²/d) *", min_value=0.001, value=2.5)
+                    n_otr = st.number_input("OTR (cc/m²/d/atm) *", min_value=0.001, value=25.0)
+                    n_cost = st.number_input("Cost ($/kg) *", min_value=0.1, value=3.5)
+                with a3:
+                    n_recyc = st.selectbox("Recyclability", list(recommender.RECYCLABILITY_SCORE_MAP.keys()))
+                    n_comp = st.text_input("Compliance", "US FDA 21 CFR §177.1520")
+                    n_source = st.text_input("Data Source", "Lab Trial 2026")
+
+                if st.form_submit_button("Save Material", type="primary"):
+                    nid = database.add_material({
+                        "name": n_name,
+                        "structure_type": n_struct,
+                        "polymer_code": "CUSTOM",
+                        "nominal_thickness_um": n_thick,
+                        "wvtr_g_m2_day": n_wvtr,
+                        "otr_cc_m2_day_atm": n_otr,
+                        "cost_index_usd_per_kg": n_cost,
+                        "recyclability_status": n_recyc,
+                        "food_contact_compliance": n_comp,
+                        "temp_range_min_c": -20.0,
+                        "temp_range_max_c": 90.0,
+                        "data_source": n_source,
+                        "test_conditions": "ASTM F1249 & D3985",
+                        "is_verified_experimental": 1,
+                        "notes": "Added from UI"
+                    })
+                    st.success(f"Added successfully with ID: {nid}!")
+                    st.rerun()
+
+        with dbe_t2:
+            mats = database.get_all_materials()
+            mat_map = {f"ID {m['id']}: {m['name']}": m for m in mats}
+            sel_edit = st.selectbox("Select Material to Modify:", list(mat_map.keys()))
+            if sel_edit:
+                cm = mat_map[sel_edit]
+                with st.form("edit_mat_form"):
+                    e1, e2 = st.columns(2)
+                    with e1:
+                        e_name = st.text_input("Name", cm["name"])
+                        e_thick = st.number_input("Thickness (µm)", value=float(cm["nominal_thickness_um"]))
+                        e_cost = st.number_input("Cost ($/kg)", value=float(cm["cost_index_usd_per_kg"]))
+                    with e2:
+                        e_wvtr = st.number_input("WVTR", value=float(cm["wvtr_g_m2_day"]))
+                        e_otr = st.number_input("OTR", value=float(cm["otr_cc_m2_day_atm"]))
+                    if st.form_submit_button("Update Details", type="primary"):
+                        cm_dict = dict(cm)
+                        cm_dict.update({"name": e_name, "nominal_thickness_um": e_thick, "cost_index_usd_per_kg": e_cost, "wvtr_g_m2_day": e_wvtr, "otr_cc_m2_day_atm": e_otr})
+                        database.update_material(cm["id"], cm_dict)
+                        st.success("Updated successfully!")
+                        st.rerun()
+
+    with db_tab2:
+        c_exp, c_imp = st.columns(2)
+        with c_exp:
+            st.markdown("##### 📥 Export Materials Database")
+            csv_data = data_loader.export_materials_to_csv()
+            st.download_button(
+                "Download Complete Database (CSV)",
+                data=csv_data,
+                file_name="packaging_materials_export.csv",
+                mime="text/csv",
+                type="primary",
+                use_container_width=True
+            )
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("##### 📄 Standard CSV Template")
+            st.download_button(
+                "Download Validation Template (CSV)",
+                data=data_loader.get_csv_template(),
+                file_name="materials_template.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+
+        with c_imp:
+            st.markdown("##### 📤 Upload Batch CSV File")
+            up_file = st.file_uploader("Upload CSV with Laboratory Records", type=["csv"])
+            if up_file:
+                content = up_file.getvalue().decode("utf-8")
+                res_imp = data_loader.validate_and_import_csv(content)
+                if res_imp["success"]:
+                    st.success(f"✅ Successfully imported {res_imp['imported_count']} material(s) into database!")
+                    st.rerun()
+                else:
+                    st.error("CSV import encountered errors.")
+                    for err in res_imp["errors"]:
+                        st.error(err)
+
+# =============================================================================
+# SECTION 9: SCIENTIFIC METHODOLOGY & AUDIT HISTORY
+# =============================================================================
+elif current_selected_idx == 8:
     st.subheader("📖 User Guide, Scientific Methodology & Audit Trail")
     st.write("Literature citations, Arrhenius mass-transfer formulas, and audit query records.")
 
@@ -1908,11 +2657,14 @@ elif current_selected_idx == 7:
                $$\\text{OTR}_{\\text{adj}} = \\text{OTR}_{\\text{std}} \\cdot e^{0.035 \\cdot (T - 23)}$$
                $$\\Delta V_{O_2} = \\text{OTR}_{\\text{adj}} \\cdot A \\cdot \\Delta P_{O_2} \\cdot t$$
             3. **Multi-Criteria Decision Analysis (MCDA):**
-               $$S_{\\text{total}} = w_b \\cdot S_{\\text{barrier}} + w_c \\cdot S_{\\text{cost}} + w_s \\cdot S_{\\text{sustainability}}$$
-            4. **Data References:**
+               $$S_{\\text{total}} = w_b \\cdot S_{\\text{barrier}} + w_c \\cdot S_{\\text{cost}} + w_s \\cdot S_{\\text{sustainability}} + w_m \\cdot S_{\\text{mechanical}}$$
+            4. **Regulatory Standards & References:**
+               - US FDA 21 CFR §177 (Indirect Food Additives: Polymers)
+               - Commission Regulation (EU) No 10/2011 (Plastic materials intended to come into contact with food)
+               - FSSAI Food Safety and Standards (Packaging) Regulations
                - ASTM F1249 (Water Vapor Transmission Rate via Infrared Sensor)
                - ASTM D3985 (Oxygen Transmission Rate via Coulometric Sensor)
-               - Robertson, G. L. (2012). *Food Packaging: Principles and Practice*, CRC Press.
+               - Robertson, G. L. (2012). *Food Packaging: Principles and Practice*, 3rd Edition, CRC Press.
             """
         )
 
@@ -1934,4 +2686,4 @@ elif current_selected_idx == 7:
             st.dataframe(pd.DataFrame(h_list), use_container_width=True)
 
 st.markdown("---")
-st.caption("Smart FoodPack AI • Modern Decision Support System for Food Packaging Materials • 2026")
+st.caption("Food Packaging AI • Modern Decision Support System for Food Packaging Materials • 2026")

@@ -11,6 +11,7 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 import plotly.express as px
@@ -80,9 +81,17 @@ def perform_material_clustering(materials_df: pd.DataFrame, n_clusters: int = 4)
     )
 
     stats = {
-        "n_clusters": n_clusters,
-        "explained_variance_ratio": var_explained.tolist(),
-        "total_variance_explained": round(float(var_explained.sum() * 100.0), 2)
+        "n_clusters": min(n_clusters, len(df)),
+        "explained_variance_ratio": [round(float(v), 4) for v in var_explained],
+        "total_variance_explained": round(float(var_explained.sum() * 100.0), 2),
+        "pc1_interpretation": (
+            "PC1 (Horizontal Axis): Primary barrier transmission gradient. "
+            "Separates high-barrier metallized films/foils (negative values) from permeable polyolefins and EMAP films (positive values)."
+        ),
+        "pc2_interpretation": (
+            "PC2 (Vertical Axis): Structural stiffness and mass density. "
+            "Separates thin flexible films from thick rigid glass and composite paperboard structures."
+        )
     }
 
     return df, fig, stats
@@ -151,9 +160,17 @@ def build_supervised_baseline() -> Tuple[RandomForestClassifier, go.Figure, Dict
     X = pd.DataFrame(records, columns=feature_names)
     y = np.array(labels)
 
+    # Rigorous 80/20 train/test split to evaluate true holdout generalization
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.20, random_state=42, stratify=y
+    )
+
     # Train Random Forest
     clf = RandomForestClassifier(n_estimators=50, max_depth=5, random_state=42)
-    clf.fit(X, y)
+    clf.fit(X_train, y_train)
+
+    train_acc = float(clf.score(X_train, y_train) * 100.0)
+    test_acc = float(clf.score(X_test, y_test) * 100.0)
 
     # Feature Importance Plot
     importances = clf.feature_importances_
@@ -181,10 +198,18 @@ def build_supervised_baseline() -> Tuple[RandomForestClassifier, go.Figure, Dict
 
     training_summary = {
         "n_samples": len(records),
+        "n_train": len(X_train),
+        "n_test": len(X_test),
         "n_classes": len(np.unique(y)),
         "classes": list(np.unique(y)),
         "model_type": "Random Forest Classifier (50 Trees, max_depth=5)",
-        "train_accuracy": round(float(clf.score(X, y) * 100.0), 2)
+        "train_accuracy": round(train_acc, 2),
+        "test_accuracy": round(test_acc, 2),
+        "split_ratio": "80% Train / 20% Holdout Test",
+        "disclaimer": (
+            "Baseline classifier trained on rule-derived food sensitivity instances to validate "
+            "feature hierarchy. Does not replace physical laboratory barrier measurement."
+        )
     }
 
     return clf, fig, training_summary

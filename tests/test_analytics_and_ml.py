@@ -45,3 +45,28 @@ def test_supervised_baseline_training():
     assert summary["train_accuracy"] > 70.0
     assert len(summary["classes"]) >= 3
     assert fig is not None
+
+
+def test_pca_interpretations_present():
+    """PCA stats dictionary must contain plain-language physical axis interpretations."""
+    df = database.get_all_materials_df()
+    _, _, stats = ml_engine.perform_material_clustering(df, n_clusters=3)
+
+    assert "pc1_interpretation" in stats
+    assert "pc2_interpretation" in stats
+    assert len(stats["pc1_interpretation"]) > 20
+    assert len(stats["pc2_interpretation"]) > 20
+    assert "barrier" in stats["pc1_interpretation"].lower()
+
+
+def test_supervised_baseline_holdout_accuracy():
+    """Supervised baseline must report holdout test accuracy and transparent split ratio."""
+    _, _, summary = ml_engine.build_supervised_baseline()
+
+    assert "test_accuracy" in summary
+    assert "train_accuracy" in summary
+    assert "split_ratio" in summary
+    assert "disclaimer" in summary
+    assert 0.0 <= summary["test_accuracy"] <= 100.0
+    assert "80% Train" in summary["split_ratio"]
+
