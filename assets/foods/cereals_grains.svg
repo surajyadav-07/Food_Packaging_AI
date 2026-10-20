@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <defs>
+    <linearGradient id="bgRice" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF7"/>
+      <stop offset="100%" stop-color="#FFF3E0"/>
+    </linearGradient>
+    <linearGradient id="goldRice" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFA000"/>
+      <stop offset="100%" stop-color="#FF6F00"/>
+    </linearGradient>
+    <linearGradient id="bowlGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FFE0B2"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="160" rx="16" fill="url(#bgRice)" stroke="#FFE082" stroke-width="2"/>
+  <circle cx="165" cy="30" r="24" fill="#FFE082" opacity="0.3"/>
+  <circle cx="30" cy="135" r="18" fill="#FFB74D" opacity="0.2"/>
+  <!-- Rice Bowl Base -->
+  <path d="M 50 85 C 50 120, 150 120, 150 85 Z" fill="url(#bowlGrad)" stroke="#FFA000" stroke-width="2"/>
+  <ellipse cx="100" cy="85" rx="50" ry="12" fill="#FFFFFF" stroke="#FFA000" stroke-width="1.5"/>
+  <!-- Rice Heap -->
+  <ellipse cx="100" cy="80" rx="42" ry="14" fill="#FFF8E1"/>
+  <!-- Grains of Basmati Rice -->
+  <ellipse cx="80" cy="78" rx="8" ry="3" transform="rotate(-20 80 78)" fill="#FFFFFF" stroke="#FFB300" stroke-width="1.2"/>
+  <ellipse cx="98" cy="74" rx="9" ry="3" transform="rotate(10 98 74)" fill="#FFFFFF" stroke="#FFB300" stroke-width="1.2"/>
+  <ellipse cx="118" cy="77" rx="8" ry="3" transform="rotate(-35 118 77)" fill="#FFFFFF" stroke="#FFB300" stroke-width="1.2"/>
+  <ellipse cx="88" cy="82" rx="9" ry="3" transform="rotate(25 88 82)" fill="#FFFFFF" stroke="#FFB300" stroke-width="1.2"/>
+  <ellipse cx="108" cy="81" rx="8" ry="3" transform="rotate(-15 108 81)" fill="#FFFFFF" stroke="#FFB300" stroke-width="1.2"/>
+  <!-- Golden Rice Stalk -->
+  <path d="M 148 38 Q 138 65 126 90" stroke="#FF8F00" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <ellipse cx="146" cy="42" rx="5" ry="2.5" transform="rotate(40 146 42)" fill="url(#goldRice)"/>
+  <ellipse cx="138" cy="50" rx="5" ry="2.5" transform="rotate(-30 138 50)" fill="url(#goldRice)"/>
+  <ellipse cx="142" cy="60" rx="5" ry="2.5" transform="rotate(40 142 60)" fill="url(#goldRice)"/>
+  <ellipse cx="134" cy="69" rx="5" ry="2.5" transform="rotate(-30 134 69)" fill="url(#goldRice)"/>
+  <!-- Badge Tag -->
+  <rect x="14" y="14" width="96" height="20" rx="10" fill="#FFFFFF" stroke="#FF8A00" stroke-width="1.2"/>
+  <circle cx="24" cy="24" r="3.5" fill="#FF8A00"/>
+  <text x="34" y="27.5" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="700" fill="#D84315">BASMATI RICE</text>
+  <text x="100" y="142" text-anchor="middle" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="600" fill="#795548">Polished Cereals &amp; Grains</text>
+</svg>

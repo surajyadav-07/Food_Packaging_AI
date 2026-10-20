@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <defs>
+    <linearGradient id="bgLentil" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF7"/>
+      <stop offset="100%" stop-color="#F7FEE7"/>
+    </linearGradient>
+    <linearGradient id="podGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#84CC16"/>
+      <stop offset="100%" stop-color="#4D7C0F"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="160" rx="16" fill="url(#bgLentil)" stroke="#FFE082" stroke-width="2"/>
+  <circle cx="165" cy="35" r="22" fill="#ECFCCB" opacity="0.6"/>
+  <!-- Lentils Pile Bowl / Scoop -->
+  <path d="M 52 88 C 52 118, 148 118, 148 88 Z" fill="#FFFFFF" stroke="#65A30D" stroke-width="2"/>
+  <ellipse cx="100" cy="88" rx="48" ry="12" fill="#F7FEE7" stroke="#65A30D" stroke-width="1.5"/>
+  <!-- Individual Chickpeas / Lentils -->
+  <circle cx="78" cy="85" r="6" fill="#84CC16" stroke="#4D7C0F" stroke-width="1"/>
+  <circle cx="92" cy="82" r="6.5" fill="#A3E635" stroke="#4D7C0F" stroke-width="1"/>
+  <circle cx="108" cy="84" r="6" fill="#BEF264" stroke="#4D7C0F" stroke-width="1"/>
+  <circle cx="122" cy="86" r="6" fill="#84CC16" stroke="#4D7C0F" stroke-width="1"/>
+  <circle cx="85" cy="90" r="5.5" fill="#A3E635" stroke="#4D7C0F" stroke-width="1"/>
+  <circle cx="102" cy="91" r="6" fill="#65A30D" stroke="#365314" stroke-width="1"/>
+  <circle cx="115" cy="91" r="5.5" fill="#84CC16" stroke="#4D7C0F" stroke-width="1"/>
+  <!-- Fresh Pod -->
+  <path d="M 60 55 C 80 45, 125 50, 145 65 C 125 65, 85 70, 60 55 Z" fill="url(#podGrad)" stroke="#365314" stroke-width="1.5"/>
+  <!-- Badge Tag -->
+  <rect x="14" y="14" width="94" height="20" rx="10" fill="#FFFFFF" stroke="#FF8A00" stroke-width="1.2"/>
+  <circle cx="24" cy="24" r="3.5" fill="#FF8A00"/>
+  <text x="34" y="27.5" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="700" fill="#D84315">PULSES &amp; DAL</text>
+  <text x="100" y="142" text-anchor="middle" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="600" fill="#795548">Puncture-Resistant Bulk Storage</text>
+</svg>

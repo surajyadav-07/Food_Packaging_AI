@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <defs>
+    <linearGradient id="layerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="160" rx="16" fill="#151F30"/>
+  <!-- Isometric Exploded Multi-layer Laminate Film Structure -->
+  <!-- Layer 1: Outer PET Print & Heat Resistant Layer -->
+  <polygon points="40,40 130,25 160,50 70,65" fill="#1E293B" stroke="#38BDF8" stroke-width="1.5" opacity="0.9"/>
+  <text x="100" y="44" font-family="sans-serif" font-size="7" font-weight="700" fill="#38BDF8" transform="rotate(-9 100 44)">Layer 1: PET (12 µm)</text>
+
+  <!-- Layer 2: Tie Layer / Adhesive Resin -->
+  <polygon points="40,58 130,43 160,68 70,83" fill="#334155" stroke="#64748B" stroke-width="1" opacity="0.8"/>
+
+  <!-- Layer 3: High-Barrier EVOH Core (Gas Barrier) -->
+  <polygon points="40,74 130,59 160,84 70,99" fill="#0D9488" stroke="#14B8A6" stroke-width="2"/>
+  <text x="100" y="78" font-family="sans-serif" font-size="7.5" font-weight="800" fill="#F8FAFC" transform="rotate(-9 100 78)">Layer 3: EVOH CORE BARRIER</text>
+
+  <!-- Layer 4: Tie Layer -->
+  <polygon points="40,92 130,77 160,102 70,117" fill="#334155" stroke="#64748B" stroke-width="1" opacity="0.8"/>
+
+  <!-- Layer 5: Inner Sealant PE Layer -->
+  <polygon points="40,110 130,95 160,120 70,135" fill="#1E293B" stroke="#10B981" stroke-width="1.5"/>
+  <text x="100" y="114" font-family="sans-serif" font-size="7" font-weight="700" fill="#10B981" transform="rotate(-9 100 114)">Layer 5: PE Sealant (50 µm)</text>
+
+  <!-- Badge -->
+  <rect x="14" y="14" width="88" height="18" rx="9" fill="#1E293B" stroke="#14B8A6" stroke-width="1"/>
+  <circle cx="23" cy="23" r="3" fill="#14B8A6"/>
+  <text x="32" y="26" font-family="sans-serif" font-size="8" font-weight="700" fill="#F8FAFC">EVOH BARRIER</text>
+</svg>

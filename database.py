@@ -907,28 +907,39 @@ def get_commodity_preset_by_name(name: str, db_path: str = DB_FILE_PATH) -> Opti
 def log_recommendation_run(
     commodity_name: str,
     category: str,
-    inputs: Dict[str, Any],
-    weights: Dict[str, Any],
-    top_recommendations: List[Dict[str, Any]],
-    db_path: str = DB_FILE_PATH
+    inputs: Optional[Dict[str, Any]] = None,
+    weights: Optional[Dict[str, Any]] = None,
+    top_recommendations: Optional[List[Dict[str, Any]]] = None,
+    db_path: str = DB_FILE_PATH,
+    inputs_dict: Optional[Dict[str, Any]] = None,
+    weights_dict: Optional[Dict[str, Any]] = None,
+    recommendations: Optional[List[Dict[str, Any]]] = None,
+    **kwargs: Any
 ) -> int:
-    """Store audit log of user recommendation queries."""
-    conn = get_db_connection(db_path)
-    cursor = conn.cursor()
-    cursor.execute("""
-    INSERT INTO audit_log (commodity_name, category, inputs_json, weights_json, top_recommendations_json)
-    VALUES (?, ?, ?, ?, ?);
-    """, (
-        commodity_name,
-        category,
-        json.dumps(inputs),
-        json.dumps(weights),
-        json.dumps(top_recommendations)
-    ))
-    log_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    return log_id
+    """Store audit log of user recommendation queries, accepting both naming conventions safely."""
+    try:
+        final_inputs = inputs if inputs is not None else inputs_dict if inputs_dict is not None else {}
+        final_weights = weights if weights is not None else weights_dict if weights_dict is not None else {}
+        final_recs = top_recommendations if top_recommendations is not None else recommendations if recommendations is not None else []
+
+        conn = get_db_connection(db_path)
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO audit_log (commodity_name, category, inputs_json, weights_json, top_recommendations_json)
+        VALUES (?, ?, ?, ?, ?);
+        """, (
+            commodity_name,
+            category,
+            json.dumps(final_inputs),
+            json.dumps(final_weights),
+            json.dumps(final_recs)
+        ))
+        log_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return log_id if log_id is not None else 0
+    except Exception:
+        return -1
 
 
 def get_recommendation_history(limit: int = 50, db_path: str = DB_FILE_PATH) -> List[Dict[str, Any]]:

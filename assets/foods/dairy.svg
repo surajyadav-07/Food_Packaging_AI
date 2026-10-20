@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <defs>
+    <linearGradient id="bgButter" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF7"/>
+      <stop offset="100%" stop-color="#FFFDE7"/>
+    </linearGradient>
+    <linearGradient id="butterBlock" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF59D"/>
+      <stop offset="100%" stop-color="#FDD835"/>
+    </linearGradient>
+    <linearGradient id="butterTop" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFF9C4"/>
+      <stop offset="100%" stop-color="#FFF176"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="160" rx="16" fill="url(#bgButter)" stroke="#FFE082" stroke-width="2"/>
+  <circle cx="165" cy="35" r="22" fill="#FFF9C4" opacity="0.6"/>
+  <!-- Butter Dish Base / Parchment Wrap -->
+  <polygon points="40,110 145,110 170,95 65,95" fill="#EEEEEE" stroke="#BDBDBD" stroke-width="1.5"/>
+  <polygon points="40,110 40,118 145,118 145,110" fill="#E0E0E0" stroke="#BDBDBD" stroke-width="1.5"/>
+  <!-- Butter Block 3D Isometric -->
+  <!-- Front face -->
+  <polygon points="55,80 125,80 125,105 55,105" fill="url(#butterBlock)" stroke="#FBC02D" stroke-width="1.5"/>
+  <!-- Top face -->
+  <polygon points="55,80 80,60 150,60 125,80" fill="url(#butterTop)" stroke="#FBC02D" stroke-width="1.5"/>
+  <!-- Right face -->
+  <polygon points="125,80 150,60 150,85 125,105" fill="#FBC02D" stroke="#F57F17" stroke-width="1.5"/>
+  <!-- Butter Curl / Pat on Top -->
+  <path d="M 85 68 C 95 60, 115 62, 112 70 C 108 76, 90 75, 85 68 Z" fill="#FFFDE7" stroke="#FBC02D" stroke-width="1"/>
+  <!-- Butter Knife -->
+  <path d="M 130 50 L 165 30 L 170 34 L 135 55 Z" fill="#CFD8DC" stroke="#78909C" stroke-width="1"/>
+  <!-- Badge Tag -->
+  <rect x="14" y="14" width="88" height="20" rx="10" fill="#FFFFFF" stroke="#FF8A00" stroke-width="1.2"/>
+  <circle cx="24" cy="24" r="3.5" fill="#FF8A00"/>
+  <text x="34" y="27.5" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="700" fill="#D84315">SALTED BUTTER</text>
+  <text x="100" y="142" text-anchor="middle" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="600" fill="#795548">Fat Oxidation &amp; Odor Barrier</text>
+</svg>

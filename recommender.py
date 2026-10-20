@@ -515,8 +515,9 @@ def compute_mechanical_score(
 
 def rank_recommendations(
     materials: List[Dict[str, Any]],
-    commodity_profile: Dict[str, Any],
-    weights: Optional[Dict[str, float]] = None
+    commodity_profile: Optional[Dict[str, Any]] = None,
+    weights: Optional[Dict[str, float]] = None,
+    **kwargs: Any
 ) -> Dict[str, Any]:
     """
     Run screening, score qualified materials, and return transparent
@@ -525,6 +526,12 @@ def rank_recommendations(
     Default weights sum to 1.0:
     barrier 0.40, cost 0.20, sustainability 0.25, mechanical 0.15.
     """
+    if commodity_profile is None and "commodity" in kwargs:
+        commodity_profile = kwargs["commodity"]
+    if weights is None and "user_weights" in kwargs:
+        weights = kwargs["user_weights"]
+    if commodity_profile is None:
+        commodity_profile = {}
     if weights is None:
         weights = {
             "barrier": 0.40,

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <defs>
+    <linearGradient id="bgMilk" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF7"/>
+      <stop offset="100%" stop-color="#F0F9FF"/>
+    </linearGradient>
+    <linearGradient id="tinGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <linearGradient id="canTop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="160" rx="16" fill="url(#bgMilk)" stroke="#FFE082" stroke-width="2"/>
+  <circle cx="165" cy="35" r="22" fill="#E0F2FE" opacity="0.6"/>
+  <!-- Canister Tin Cylinder -->
+  <rect x="70" y="52" width="60" height="65" rx="6" fill="url(#tinGrad)" stroke="#94A3B8" stroke-width="1.5"/>
+  <ellipse cx="100" cy="52" rx="30" ry="8" fill="url(#canTop)" stroke="#0369A1" stroke-width="1.5"/>
+  <ellipse cx="100" cy="117" rx="30" ry="8" fill="#CBD5E1" stroke="#94A3B8" stroke-width="1.5"/>
+  <!-- Label Band -->
+  <rect x="70" y="68" width="60" height="34" fill="#0284C7"/>
+  <text x="100" y="82" text-anchor="middle" font-family="'Segoe UI', Poppins, sans-serif" font-size="8" font-weight="800" fill="#FFFFFF">WHOLE MILK</text>
+  <text x="100" y="93" text-anchor="middle" font-family="'Segoe UI', Poppins, sans-serif" font-size="6.5" font-weight="700" fill="#BAE6FD">FULL CREAM POWDER</text>
+  <!-- Milk Drops / Scoop -->
+  <path d="M 138 75 C 138 65, 155 70, 155 80 C 155 88, 142 90, 138 75 Z" fill="#FFFFFF" stroke="#0284C7" stroke-width="1.2"/>
+  <!-- Badge Tag -->
+  <rect x="14" y="14" width="94" height="20" rx="10" fill="#FFFFFF" stroke="#FF8A00" stroke-width="1.2"/>
+  <circle cx="24" cy="24" r="3.5" fill="#FF8A00"/>
+  <text x="34" y="27.5" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="700" fill="#D84315">MILK POWDER</text>
+  <text x="100" y="142" text-anchor="middle" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="600" fill="#795548">Strict Moisture &amp; Oxygen Ingress</text>
+</svg>

@@ -68,6 +68,7 @@ def estimate_moisture_shelf_life(
         "critical_water_gain_g": round(float(critical_water_gain_g), 2),
         "days_array": days_array.tolist(),
         "moisture_curve": [round(float(v), 2) for v in moisture_curve],
+
         "critical_threshold": critical_moisture_percent,
         "is_hermetic": bool(wvtr_standard < 0.02)
     }
@@ -288,3 +289,5 @@ def estimate_combined_shelf_life(
             "enzymatic staling, or physical package punctures."
         )
     }
+
+

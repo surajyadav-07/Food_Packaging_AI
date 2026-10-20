@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <defs>
+    <linearGradient id="crustGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+    <linearGradient id="crumbGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+    <linearGradient id="cookieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="160" rx="16" fill="#151F30"/>
+  <!-- Perforated Moisture-Controlled Bread Bag outline -->
+  <rect x="40" y="32" width="120" height="100" rx="10" fill="#1E293B" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 2"/>
+  <rect x="85" y="24" width="30" height="12" rx="3" fill="#334155" stroke="#14B8A6" stroke-width="1"/>
+  <!-- Bread Loaf Inside -->
+  <path d="M 55 58 C 55 46, 68 40, 80 40 L 120 40 C 132 40, 145 46, 145 58 L 145 105 C 145 110, 138 114, 130 114 L 70 114 C 62 114, 55 110, 55 105 Z" fill="url(#crumbGrad)" stroke="url(#crustGrad)" stroke-width="3"/>
+  <!-- Sliced Scoring Lines -->
+  <line x1="72" y1="46" x2="72" y2="110" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+  <line x1="90" y1="44" x2="90" y2="110" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+  <line x1="108" y1="44" x2="108" y2="110" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+  <line x1="126" y1="46" x2="126" y2="110" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+  <!-- Golden Digestive Cookie Foreground -->
+  <circle cx="140" cy="115" r="22" fill="url(#cookieGrad)" stroke="#78350F" stroke-width="1.5"/>
+  <circle cx="132" cy="108" r="1.5" fill="#78350F"/>
+  <circle cx="146" cy="110" r="1.5" fill="#78350F"/>
+  <circle cx="138" cy="120" r="1.5" fill="#78350F"/>
+  <circle cx="148" cy="122" r="1.5" fill="#78350F"/>
+  <circle cx="128" cy="118" r="1.5" fill="#78350F"/>
+  <!-- Badge -->
+  <rect x="14" y="14" width="76" height="18" rx="9" fill="#1E293B" stroke="#F59E0B" stroke-width="1"/>
+  <circle cx="23" cy="23" r="3" fill="#F59E0B"/>
+  <text x="32" y="26" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#F8FAFC">BAKERY</text>
+</svg>

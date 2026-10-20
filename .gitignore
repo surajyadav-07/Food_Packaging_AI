@@ -4,4 +4,6 @@ __pycache__/
 *.pyc
 .env
 .pytest_cache/
-scratch/
+scratch/
+backup-working-tree.patch
+backup-staged.patch

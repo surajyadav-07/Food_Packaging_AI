@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <defs>
+    <linearGradient id="bgApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF7"/>
+      <stop offset="100%" stop-color="#F1F8E9"/>
+    </linearGradient>
+    <linearGradient id="appleSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#B91C1C"/>
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="100%" stop-color="#15803D"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="160" rx="16" fill="url(#bgApple)" stroke="#FFE082" stroke-width="2"/>
+  <circle cx="165" cy="35" r="22" fill="#DCFCE7" opacity="0.6"/>
+  <!-- Apple Wedge 1 -->
+  <path d="M 55 95 C 65 60, 115 65, 120 100 C 100 115, 70 112, 55 95 Z" fill="#FFFBEB" stroke="#B91C1C" stroke-width="2.5"/>
+  <path d="M 55 95 C 60 70, 95 65, 120 100" stroke="#EF4444" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <!-- Apple Core & Pip -->
+  <ellipse cx="90" cy="92" rx="3.5" ry="2" transform="rotate(30 90 92)" fill="#78350F"/>
+  <!-- Apple Wedge 2 (Behind) -->
+  <path d="M 105 85 C 115 55, 155 60, 160 90 C 145 105, 120 102, 105 85 Z" fill="#FEF3C7" stroke="#B91C1C" stroke-width="2"/>
+  <path d="M 105 85 C 115 60, 145 58, 160 90" stroke="#EF4444" stroke-width="3.5" fill="none"/>
+  <!-- Green Fresh Leaf -->
+  <path d="M 85 52 C 75 40, 95 35, 105 45 C 95 58, 85 52, 85 52 Z" fill="url(#leafGrad)"/>
+  <!-- Badge Tag -->
+  <rect x="14" y="14" width="94" height="20" rx="10" fill="#FFFFFF" stroke="#FF8A00" stroke-width="1.2"/>
+  <circle cx="24" cy="24" r="3.5" fill="#FF8A00"/>
+  <text x="34" y="27.5" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="700" fill="#D84315">APPLE SLICES</text>
+  <text x="100" y="142" text-anchor="middle" font-family="'Segoe UI', Poppins, sans-serif" font-size="9" font-weight="600" fill="#795548">Respiration &amp; EMAP Film</text>
+</svg>

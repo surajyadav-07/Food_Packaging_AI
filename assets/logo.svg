@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 100" fill="none">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8A00" />
+      <stop offset="100%" stop-color="#FF5722" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFB300" />
+      <stop offset="100%" stop-color="#FF8A00" />
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2E7D32" />
+      <stop offset="100%" stop-color="#81C784" />
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- 3D Packaging Cube Icon (Left) -->
+  <g transform="translate(10, 10)">
+    <!-- Hexagonal Base -->
+    <path d="M 40 5 L 75 25 L 75 65 L 40 85 L 5 65 L 5 25 Z" fill="#FFF8E1" stroke="#FF8A00" stroke-width="2.2" />
+    <!-- Isometric Top Flap -->
+    <path d="M 40 5 L 75 25 L 40 45 L 5 25 Z" fill="#FFE082" stroke="#FF8A00" stroke-width="1.8" />
+    <!-- Left Box Facet -->
+    <path d="M 5 25 L 40 45 L 40 85 L 5 65 Z" fill="#FFD54F" stroke="#FF8A00" stroke-width="1.8" />
+    <!-- Right Box Facet -->
+    <path d="M 75 25 L 40 45 L 40 85 L 75 65 Z" fill="#FFCA28" stroke="#FF8A00" stroke-width="1.8" />
+
+    <!-- Organic Eco Leaf Crossing the Box -->
+    <path d="M 18 55 C 18 30, 48 18, 62 16 C 62 38, 48 68, 28 72 C 22 73, 18 68, 18 55 Z" 
+          fill="url(#leafGrad)" fill-opacity="0.95" />
+    <!-- Leaf Center Stem / Synapse -->
+    <path d="M 22 68 Q 40 42 60 18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 3" />
+    
+    <!-- AI Neural Checkpoints -->
+    <circle cx="40" cy="5" r="4" fill="#FF5722" filter="url(#softGlow)" />
+    <circle cx="75" cy="25" r="4" fill="#FF8A00" filter="url(#softGlow)" />
+    <circle cx="75" cy="65" r="3.5" fill="#FFB300" />
+    <circle cx="40" cy="85" r="4" fill="#2E7D32" filter="url(#softGlow)" />
+    <circle cx="5" cy="65" r="3.5" fill="#FF8A00" />
+    <circle cx="5" cy="25" r="4" fill="#FF5722" />
+    <circle cx="40" cy="45" r="4.5" fill="#FF8A00" filter="url(#softGlow)" />
+
+    <!-- Pulsing Barrier Arc -->
+    <path d="M 20 22 A 32 32 0 0 1 68 38" fill="none" stroke="url(#primaryGrad)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 4" />
+  </g>
+
+  <!-- Typography: Smart FoodPack AI -->
+  <text x="105" y="47" font-family="'Poppins', 'Inter', -apple-system, sans-serif" font-size="28" font-weight="800" fill="#3E2723" letter-spacing="-0.5">
+    Smart FoodPack <tspan fill="url(#primaryGrad)">AI</tspan>
+  </text>
+  
+  <!-- Subtitle Tagline -->
+  <text x="106" y="69" font-family="'Inter', -apple-system, sans-serif" font-size="11.5" font-weight="600" fill="#6D4C41" letter-spacing="0.2">
+    Next-Gen Packaging Intelligence &amp; Shelf-Life Simulation
+  </text>
+
+  <!-- Pill Badge -->
+  <rect x="424" y="24" width="102" height="22" rx="11" fill="#FFF3E0" stroke="#FF8A00" stroke-width="1.2" />
+  <circle cx="436" cy="35" r="3.5" fill="#FF8A00" />
+  <text x="446" y="39" font-family="'Poppins', 'Inter', sans-serif" font-size="9.5" font-weight="800" fill="#E65100" letter-spacing="0.5">MCDA 3D</text>
+</svg>
