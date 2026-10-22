@@ -7,3 +7,12 @@ __pycache__/
 scratch/
 backup-working-tree.patch
 backup-staged.patch
+
+*.bak
+*.bak_step2
+*.patch
+.vscode/
+.venv/
+__pycache__/
+.pytest_cache/
+reports/

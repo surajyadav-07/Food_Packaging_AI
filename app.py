@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 import json
 import base64
 import textwrap
+from typing import Any, Dict, List, Optional
 
 # Local system modules
 import database
@@ -67,30 +68,72 @@ FOOD_CATEGORY_IMAGE_MAP = {
 }
 
 FOOD_EMOJI_MAP = {
-    "Fried Potato Chips & Crisps": "🥔",
-    "Roasted Cashews & Almonds": "🥜",
-    "Strawberries & Soft Berries": "🍓",
-    "Cheddar Cheese Block": "🧀",
+    # Bakery products
     "White Sandwich Bread": "🍞",
     "Dry Digestive Biscuits / Cookies": "🍪",
-    "Polished Basmati Rice": "🍚",
+    "Butter Croissants & Pastries": "🥐",
+    "Sliced Plain Bagels": "🥯",
+    "Chocolate Chip Cookies": "🍪",
+    "Soft Flour Tortilla Wraps": "🫓",
+    # Cereals and grains
     "Whole Wheat Flour (Atta)": "🌾",
-    "Salted Butter": "🧈",
+    "Polished Basmati Rice": "🍚",
+    "Rolled Oats & Oatmeal": "🥣",
+    "Corn Flakes Breakfast Cereal": "🥣",
+    "Pearl Millet Flour (Bajra)": "🌾",
+    "Dry Durum Wheat Pasta": "🍝",
+    # Dairy products
     "Whole Milk Powder (Full Cream)": "🥛",
+    "Cheddar Cheese Block": "🧀",
+    "Salted Butter": "🧈",
+    "Whey Protein Isolate Powder": "🥛",
+    "Shredded Mozzarella Cheese": "🧀",
+    "Fresh Paneer (Cottage Cheese)": "🧀",
+    # Fruits and vegetables
     "Fresh Cut Apple Slices": "🍎",
+    "Strawberries & Soft Berries": "🍓",
+    "Fresh Baby Spinach Leaves": "🥬",
+    "Fresh Button Mushrooms": "🍄",
+    "Cherry Tomatoes": "🍅",
+    "Seedless Table Grapes": "🍇",
+    # Pulses
     "Green Lentils & Chickpeas": "🫘",
+    "Split Red Lentils (Masoor Dal)": "🫘",
+    "Whole Black Gram (Urad Dal)": "🫘",
+    "Dried Red Kidney Beans (Rajma)": "🫘",
+    "Roasted Salted Peanuts": "🥜",
+    "Split Yellow Pigeon Peas (Toor Dal)": "🫘",
+    # Snacks
+    "Fried Potato Chips & Crisps": "🥔",
+    "Roasted Cashews & Almonds": "🥜",
+    "Extruded Corn Puffs": "🍿",
+    "Spiced Banana Chips": "🍌",
+    "Granola & Seed Snack Bar": "🍫",
+    "Rice Crackers & Rice Cakes": "🍘",
 }
 
 
-def get_food_image_path(category_or_name: str, product_name: str = "") -> str:
+def get_food_image_path(category_or_name: str, product_name: str = "", image_path: str = "") -> str:
     """Return local image path for food category or preset product with dedicated dictionary mapping and graceful fallback."""
-    # 1. Exact match by product name
+    # 0. Direct image path if specified and exists
+    if image_path and os.path.exists(image_path):
+        return image_path
+
+    # 1. Product slug check in assets/products/
+    if product_name:
+        import re
+        slug = re.sub(r"[^a-zA-Z0-9]+", "_", product_name).strip("_").lower()
+        p_slug = os.path.join("assets", "products", f"{slug}.jpg")
+        if os.path.exists(p_slug):
+            return p_slug
+
+    # 2. Exact match by product name in FOOD_PRODUCT_IMAGE_MAP
     if product_name and product_name in FOOD_PRODUCT_IMAGE_MAP:
         p = FOOD_PRODUCT_IMAGE_MAP[product_name]
         if os.path.exists(p):
             return p
 
-    # 2. Exact match by category_or_name
+    # 3. Exact match by category_or_name
     if category_or_name in FOOD_PRODUCT_IMAGE_MAP:
         p = FOOD_PRODUCT_IMAGE_MAP[category_or_name]
         if os.path.exists(p):
@@ -98,66 +141,90 @@ def get_food_image_path(category_or_name: str, product_name: str = "") -> str:
 
     search_term = (str(product_name) + " " + str(category_or_name)).lower()
 
-    # 3. Product keyword-based matching
+    # 4. Product keyword-based matching
     if "chip" in search_term or "crisp" in search_term:
-        p = "assets/foods/potato_chips.jpg"
+        p = "assets/products/fried_potato_chips_crisps.jpg"
     elif "cashew" in search_term or "almond" in search_term or "nut" in search_term:
-        p = "assets/foods/roasted_cashews.jpg"
+        p = "assets/products/roasted_cashews_almonds.jpg"
     elif "strawberr" in search_term or "berr" in search_term:
-        p = "assets/foods/strawberries.jpg"
+        p = "assets/products/strawberries_soft_berries.jpg"
     elif "cheese" in search_term:
-        p = "assets/foods/cheddar_cheese.jpg"
+        p = "assets/products/cheddar_cheese_block.jpg"
     elif "bread" in search_term or "toast" in search_term:
-        p = "assets/foods/sandwich_bread.jpg"
+        p = "assets/products/white_sandwich_bread.jpg"
     elif "biscuit" in search_term or "cookie" in search_term:
-        p = "assets/foods/digestive_biscuits.jpg"
+        p = "assets/products/digestive_biscuits_cookies.jpg"
     elif "rice" in search_term or "basmati" in search_term:
-        p = "assets/foods/basmati_rice.svg"
+        p = "assets/products/polished_basmati_rice.jpg"
     elif "flour" in search_term or "atta" in search_term or "wheat" in search_term:
-        p = "assets/foods/wheat_flour.svg"
+        p = "assets/products/whole_wheat_flour_atta.jpg"
     elif "butter" in search_term:
-        p = "assets/foods/salted_butter.svg"
+        p = "assets/products/salted_butter.jpg"
     elif "milk" in search_term or "powder" in search_term:
-        p = "assets/foods/milk_powder.svg"
+        p = "assets/products/whole_milk_powder_full_cream.jpg"
     elif "apple" in search_term:
-        p = "assets/foods/apple_slices.svg"
+        p = "assets/products/fresh_cut_apple_slices.jpg"
     elif "lentil" in search_term or "dal" in search_term or "chickpea" in search_term or "pulse" in search_term:
-        p = "assets/foods/green_lentils.svg"
+        p = "assets/products/green_lentils_chickpeas.jpg"
     elif category_or_name in FOOD_CATEGORY_IMAGE_MAP:
         p = FOOD_CATEGORY_IMAGE_MAP[category_or_name]
     else:
-        p = "assets/foods/snacks.svg"
+        p = "assets/products/placeholder_food.jpg"
 
     if os.path.exists(p):
         return p
+    if os.path.exists("assets/products/placeholder_food.jpg"):
+        return "assets/products/placeholder_food.jpg"
     return "assets/foods/snacks.svg" if os.path.exists("assets/foods/snacks.svg") else ""
 
 
-def get_material_image_path(mat_name: str) -> str:
-    """Return local image path for packaging material, preferring high-res JPG with SVG fallback."""
+def get_material_image_path(mat_name: str, mat_obj: Optional[Dict[str, Any]] = None) -> str:
+    """Return local image path for packaging material, resolving exact 16 assets with clean SVG/BOPP fallback."""
+    if mat_obj and mat_obj.get("image_path") and os.path.exists(mat_obj["image_path"]):
+        return mat_obj["image_path"]
+
     name_lower = str(mat_name).lower()
-    
+
     if "glass" in name_lower:
-        candidates = ["assets/materials/glass_container.jpg", "assets/materials/glass_container.svg"]
-    elif "aluminium foil" in name_lower or "al foil" in name_lower or "alu" in name_lower or "foil" in name_lower:
-        candidates = ["assets/materials/alu_foil.jpg", "assets/materials/alu_foil.svg"]
-    elif "evoh" in name_lower or "bopa" in name_lower or "nylon" in name_lower or "composite" in name_lower:
-        candidates = ["assets/materials/barrier_composite.jpg", "assets/materials/barrier_composite.svg"]
-    elif "paperboard" in name_lower or "paper" in name_lower or "carton" in name_lower:
-        candidates = ["assets/materials/paperboard.jpg", "assets/materials/paperboard.svg"]
-    elif "rpet" in name_lower or "pet" in name_lower:
-        candidates = ["assets/materials/pet_rpet.jpg", "assets/materials/pet_rpet.svg"]
-    elif "cellulose" in name_lower or "pla" in name_lower or "compost" in name_lower or "natureflex" in name_lower:
-        candidates = ["assets/materials/bio_cellulose.jpg", "assets/materials/bio_cellulose.svg"]
-    elif "bopp" in name_lower or "metallized" in name_lower or "hdpe" in name_lower or "ldpe" in name_lower or "poly" in name_lower:
-        candidates = ["assets/materials/bopp_laminate.jpg", "assets/materials/bopp_laminate.svg"]
+        slug = "glass_container"
+    elif "aluminium foil" in name_lower or "al foil" in name_lower:
+        slug = "alu_foil_laminate"
+    elif "tri-laminate" in name_lower or "bopp / met-bopp" in name_lower:
+        slug = "bopp_met_bopp_pe"
+    elif "met-bopp" in name_lower or "metallized bopp" in name_lower:
+        slug = "met_bopp"
+    elif "met-pet" in name_lower or "metallized pet" in name_lower:
+        slug = "met_pet"
+    elif "evoh" in name_lower:
+        slug = "pet_evoh_pe"
+    elif "bopa" in name_lower or "nylon" in name_lower:
+        slug = "bopa_pe_laminate"
+    elif "paperboard" in name_lower or "carton" in name_lower:
+        slug = "paperboard_pe"
+    elif "rpet" in name_lower or "recycled pet" in name_lower:
+        slug = "rpet_film"
+    elif "pet film" in name_lower:
+        slug = "pet_film"
+    elif "micro-perforated" in name_lower or "perforated" in name_lower:
+        slug = "microperf_bopp"
+    elif "natureflex" in name_lower or "cellulose" in name_lower:
+        slug = "cellulose_natureflex"
+    elif "pla" in name_lower or "compost" in name_lower:
+        slug = "pla_bioplastic"
+    elif "hdpe" in name_lower:
+        slug = "hdpe_blown"
+    elif "ldpe" in name_lower:
+        slug = "ldpe_monolayer"
+    elif "bopp" in name_lower:
+        slug = "bopp_film"
     else:
-        candidates = ["assets/materials/bopp_laminate.jpg", "assets/materials/bopp_laminate.svg"]
-        
-    for c in candidates:
-        if os.path.exists(c):
-            return c
+        slug = "bopp_film"
+
+    for cand in [f"assets/materials/{slug}.jpg", f"assets/materials/{slug}.svg", "assets/materials/bopp_film.jpg"]:
+        if os.path.exists(cand):
+            return cand
     return ""
+
 
 
 def get_image_base64(path: str) -> str:
@@ -210,13 +277,17 @@ if "analysis_profile" not in st.session_state:
 if "analysis_weights" not in st.session_state:
     st.session_state["analysis_weights"] = None
 if "advisor_category" not in st.session_state:
-    st.session_state["advisor_category"] = "Snacks"
+    st.session_state["advisor_category"] = "Bakery products"
 if "advisor_product_name" not in st.session_state:
-    st.session_state["advisor_product_name"] = "Fried Potato Chips & Crisps"
+    st.session_state["advisor_product_name"] = None
 if "active_tab" not in st.session_state:
     st.session_state["active_tab"] = "🎯 Packaging Advisor"
 if "material_shortlist" not in st.session_state:
     st.session_state["material_shortlist"] = []
+if "compare_basket" not in st.session_state:
+    st.session_state["compare_basket"] = []
+if "show_compare_dialog" not in st.session_state:
+    st.session_state["show_compare_dialog"] = False
 if "scroll_to_workspace" not in st.session_state:
     st.session_state["scroll_to_workspace"] = False
 
@@ -243,7 +314,279 @@ current_result = st.session_state.get("analysis_result")
 
 
 # -----------------------------------------------------------------------------
-# Collapsible Sidebar (Platform Info, Shortlist, History & Methodology)
+# Material Card Mini Metric Bars & Visual Formatting Helpers
+# -----------------------------------------------------------------------------
+def compute_mini_bars(mat: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Compute 4 normalized mini metric bars (WVTR, OTR, Cost, CO2e) where higher/fuller is always better."""
+    # 1. WVTR: 0.001 to 180 g/m²/d (lower is better)
+    wvtr = float(mat.get("wvtr_g_m2_day", 10.0))
+    wvtr_pct = max(10.0, min(100.0, 100.0 - ((np.log10(max(0.001, wvtr)) - (-3.0)) / (2.3 - (-3.0))) * 85.0))
+    wvtr_color = "#2E7D32" if wvtr_pct >= 75 else "#E9B44C" if wvtr_pct >= 45 else "#94A3B8"
+
+    # 2. OTR: 0.001 to 8500 cc/m²/d/atm (lower is better)
+    otr = float(mat.get("otr_cc_m2_day_atm", 100.0))
+    otr_pct = max(10.0, min(100.0, 100.0 - ((np.log10(max(0.001, otr)) - (-3.0)) / (4.0 - (-3.0))) * 85.0))
+    otr_color = "#2E7D32" if otr_pct >= 75 else "#E9B44C" if otr_pct >= 45 else "#94A3B8"
+
+    # 3. Cost: $1.75 to $5.80 / kg (lower is better)
+    cost = float(mat.get("cost_index_usd_per_kg", 3.0) or 3.0)
+    cost_pct = max(12.0, min(100.0, 100.0 - ((cost - 1.5) / (6.0 - 1.5)) * 82.0))
+    cost_color = "#2E7D32" if cost_pct >= 75 else "#E9B44C" if cost_pct >= 45 else "#94A3B8"
+
+    # 4. CO2e: 1.15 to 5.20 kg CO2e / kg (lower is better)
+    co2 = float(mat.get("carbon_footprint_kg_co2_per_kg", 2.5) or 2.5)
+    co2_pct = max(12.0, min(100.0, 100.0 - ((co2 - 1.0) / (5.5 - 1.0)) * 82.0))
+    co2_color = "#2E7D32" if co2_pct >= 75 else "#E9B44C" if co2_pct >= 45 else "#94A3B8"
+
+    return [
+        {"name": "Moisture Barrier", "val_str": f"{wvtr} g/m²/d", "pct": wvtr_pct, "color": wvtr_color},
+        {"name": "Oxygen Barrier", "val_str": f"{otr} cc/m²/d", "pct": otr_pct, "color": otr_color},
+        {"name": "Cost Economy", "val_str": f"${cost:.2f} / kg", "pct": cost_pct, "color": cost_color},
+        {"name": "Carbon Footprint", "val_str": f"{co2:.2f} kg CO₂e", "pct": co2_pct, "color": co2_color},
+    ]
+
+
+def get_recyclability_pill(status: str) -> str:
+    """Return stylized HTML badge with color for recyclability stream."""
+    st_low = str(status).lower()
+    if "curbside" in st_low or "mono" in st_low or ("stream" in st_low and "specialized" not in st_low):
+        return "<span class='meta-badge' style='background:#E8F5E9; color:#2E7D32; font-weight:700; border: 1px solid rgba(46, 125, 50, 0.3); font-size: 0.70rem;'>♻️ Curbside Recyclable</span>"
+    elif "compost" in st_low or "bio" in st_low:
+        return "<span class='meta-badge' style='background:#FFF3E0; color:#E65100; font-weight:700; border: 1px solid rgba(230, 81, 0, 0.3); font-size: 0.70rem;'>🍂 Industrially Compostable</span>"
+    else:
+        return "<span class='meta-badge' style='background:#FFEBEE; color:#C62828; font-weight:700; border: 1px solid rgba(198, 40, 40, 0.3); font-size: 0.70rem;'>⚠️ Specialized Stream</span>"
+
+
+def render_full_width_comparison_matrix(materials: List[Dict[str, Any]]) -> str:
+    """Build readable, full-width HTML comparison matrix with sticky first column and green winner highlights."""
+    if not materials:
+        return ""
+
+    min_wvtr = min(float(m.get("wvtr_g_m2_day", 9999)) for m in materials)
+    min_otr = min(float(m.get("otr_cc_m2_day_atm", 9999)) for m in materials)
+    min_cost = min(float(m.get("cost_index_usd_per_kg", 9999) or 9999) for m in materials)
+    min_co2 = min(float(m.get("carbon_footprint_kg_co2_per_kg", 999) or 999) for m in materials)
+    max_tensile = max(float(m.get("tensile_strength_mpa") or 0) for m in materials)
+
+    rows = [
+        ("Structure Type", [m.get("structure_type", "—") for m in materials], None),
+        ("Nominal Thickness", [f"{m.get('nominal_thickness_um', '—')} µm" for m in materials], None),
+        ("Water Vapor Transmission (WVTR)", [
+            f"<span class='cmp-matrix-winner-val'>⭐ {m.get('wvtr_g_m2_day')}</span> g/m²/d" if float(m.get("wvtr_g_m2_day", 9999)) == min_wvtr
+            else f"{m.get('wvtr_g_m2_day')} g/m²/d" for m in materials
+        ], "↓ lower is better (38°C, 90% RH)"),
+        ("Oxygen Transmission (OTR)", [
+            f"<span class='cmp-matrix-winner-val'>⭐ {m.get('otr_cc_m2_day_atm')}</span> cc/m²/d" if float(m.get("otr_cc_m2_day_atm", 9999)) == min_otr
+            else f"{m.get('otr_cc_m2_day_atm')} cc/m²/d" for m in materials
+        ], "↓ lower is better (23°C, 0% RH)"),
+        ("Unit Cost Index", [
+            f"<span class='cmp-matrix-winner-val'>⭐ ${float(m.get('cost_index_usd_per_kg') or 0):.2f}</span> / kg" if m.get("cost_index_usd_per_kg") and float(m.get("cost_index_usd_per_kg")) == min_cost
+            else (f"${float(m.get('cost_index_usd_per_kg') or 0):.2f} / kg" if m.get("cost_index_usd_per_kg") is not None else "Unreported") for m in materials
+        ], "↓ lower is better"),
+        ("Embodied Carbon Footprint", [
+            f"<span class='cmp-matrix-winner-val'>⭐ {float(m.get('carbon_footprint_kg_co2_per_kg') or 0):.2f}</span> kg CO₂e" if m.get("carbon_footprint_kg_co2_per_kg") and float(m.get("carbon_footprint_kg_co2_per_kg")) == min_co2
+            else (f"{float(m.get('carbon_footprint_kg_co2_per_kg') or 0):.2f} kg CO₂e" if m.get("carbon_footprint_kg_co2_per_kg") is not None else "Unreported") for m in materials
+        ], "↓ lower is better"),
+        ("Tensile Strength", [
+            f"<span class='cmp-matrix-winner-val'>⭐ {float(m.get('tensile_strength_mpa') or 0):.1f}</span> MPa" if m.get("tensile_strength_mpa") and float(m.get("tensile_strength_mpa")) == max_tensile
+            else (f"{float(m.get('tensile_strength_mpa') or 0):.1f} MPa" if m.get("tensile_strength_mpa") is not None else "Unreported") for m in materials
+        ], "↑ higher is better"),
+        ("Circularity & Recyclability", [get_recyclability_pill(m.get("recyclability_status", "")) for m in materials], None),
+        ("Food Contact Compliance", [m.get("food_contact_compliance", "Compliant") for m in materials], None),
+        ("Standard Test Conditions", [m.get("test_conditions", "ASTM F1249 / D3985") for m in materials], None),
+        ("Literature Data Source", [m.get("data_source", "Published Literature") for m in materials], None)
+    ]
+
+    html = '<div style="overflow-x: auto; width: 100%; border-radius: 8px; margin-top: 10px; margin-bottom: 16px;">'
+    html += '<table class="cmp-matrix-table">'
+    html += '<thead><tr>'
+    html += '<th style="min-width: 190px; position: sticky; left: 0; z-index: 2; background: var(--forest-deep);">Property / Specification</th>'
+    for m in materials:
+        m_img = get_image_base64(get_material_image_path(m["name"]))
+        thumb_tag = f'<img src="{m_img}" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px; vertical-align: middle; margin-right: 6px;" />' if m_img else ''
+        html += f'<th style="min-width: 180px;">{thumb_tag}<b>{m["name"].split("(")[0].strip()}</b></th>'
+    html += '</tr></thead><tbody>'
+
+    for prop_name, vals, direction in rows:
+        dir_badge = f' <span style="font-size: 0.68rem; color: #536058; font-weight: normal; display: block;">{direction}</span>' if direction else ''
+        html += f'<tr><td style="font-weight: 700; position: sticky; left: 0; background: #F8FAFC; z-index: 1;">{prop_name}{dir_badge}</td>'
+        for v in vals:
+            html += f'<td>{v}</td>'
+        html += '</tr>'
+    html += '</tbody></table></div>'
+    return html
+
+
+# -----------------------------------------------------------------------------
+# Universal Side-by-Side Material Comparison Modal Dialog (st.dialog)
+# -----------------------------------------------------------------------------
+@st.dialog("⚖️ Side-by-Side Material Comparison", width="large")
+def compare_materials_dialog(selected_material_names: List[str], active_food: Optional[Dict[str, Any]] = None):
+    """Modal comparison dialog opening directly in-place without page scroll or tab change."""
+    selected_mats = [m for m in all_materials if m["name"] in selected_material_names]
+    if len(selected_mats) < 2:
+        st.warning("Please add at least 2 materials to compare.")
+        return
+
+    st.markdown(f"#### Comparing {len(selected_mats)} Benchmark Packaging Materials")
+    if active_food:
+        st.caption(f"Evaluating physical preservation suitability for **{active_food.get('name', 'Selected Product')}**.")
+
+    # 1. Specimen Cards side by side
+    c_cols = st.columns(len(selected_mats))
+    for col, m in zip(c_cols, selected_mats):
+        with col:
+            img_p = get_material_image_path(m["name"])
+            img_b64 = get_image_base64(img_p)
+            bars = compute_mini_bars(m)
+            rec_pill = get_recyclability_pill(m.get("recyclability_status", ""))
+
+            bars_html = "".join(f"""
+            <div class="mini-metric-row">
+                <div class="mini-metric-label-val">
+                    <span class="mini-metric-label">{b['name']}</span>
+                    <span class="mini-metric-val">{b['val_str']}</span>
+                </div>
+                <div class="mini-bar-track">
+                    <div class="mini-bar-fill" style="width: {b['pct']:.1f}%; background-color: {b['color']};"></div>
+                </div>
+            </div>
+            """ for b in bars)
+
+            render_html(f"""
+            <div class="mat-specimen-card">
+                <img src="{img_b64}" class="mat-specimen-img" />
+                <div class="mat-specimen-body">
+                    <div class="mat-specimen-name">{m['name'].split('(')[0].strip()}</div>
+                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px;">
+                        <span class="meta-badge" style="font-size: 0.68rem;">{m.get('structure_type', 'Flexible')}</span>
+                        <span class="meta-badge" style="font-size: 0.68rem;">{m.get('nominal_thickness_um', '-')} µm</span>
+                    </div>
+                    <div class="mini-metrics-container">{bars_html}</div>
+                    <div style="margin-top: 4px;">{rec_pill}</div>
+                </div>
+            </div>
+            """)
+            if st.button("✕ Remove", key=f"btn_dlg_rm_{m['name'][:10]}", use_container_width=True):
+                st.session_state["compare_basket"].remove(m["name"])
+                st.rerun()
+
+    # 2. Category Leaders
+    best_b = min(selected_mats, key=lambda x: float(x.get("wvtr_g_m2_day", 9999)))
+    best_c = min(selected_mats, key=lambda x: float(x.get("cost_index_usd_per_kg", 9999) or 9999))
+    best_e = min(selected_mats, key=lambda x: float(x.get("carbon_footprint_kg_co2_per_kg", 999) or 999))
+
+    render_html(f"""
+    <div class="winner-summary-grid" style="margin: 16px 0;">
+        <div class="winner-highlight-card">
+            <span class="winner-badge-pill" style="background: rgba(33, 150, 243, 0.12); color: #0288D1;">🛡️ Best Barrier</span>
+            <div style="font-weight: 800; font-size: 0.90rem; color: var(--text-main); margin-bottom: 2px;">{best_b['name'].split('(')[0].strip()}</div>
+            <div style="font-size: 0.74rem; color: var(--text-muted);">WVTR: <b>{best_b.get('wvtr_g_m2_day')}</b> g/m²/d</div>
+        </div>
+        <div class="winner-highlight-card">
+            <span class="winner-badge-pill" style="background: rgba(76, 175, 80, 0.12); color: #2E7D32;">💰 Most Economical</span>
+            <div style="font-weight: 800; font-size: 0.90rem; color: var(--text-main); margin-bottom: 2px;">{best_c['name'].split('(')[0].strip()}</div>
+            <div style="font-size: 0.74rem; color: var(--text-muted);">Cost: <b>${float(best_c.get('cost_index_usd_per_kg', 0) or 0):.2f}</b> / kg</div>
+        </div>
+        <div class="winner-highlight-card">
+            <span class="winner-badge-pill" style="background: rgba(46, 125, 50, 0.12); color: #1B5E20;">🌱 Most Eco-Friendly</span>
+            <div style="font-weight: 800; font-size: 0.90rem; color: var(--text-main); margin-bottom: 2px;">{best_e['name'].split('(')[0].strip()}</div>
+            <div style="font-size: 0.74rem; color: var(--text-muted);">Carbon: <b>{best_e.get('carbon_footprint_kg_co2_per_kg', '-')}</b> kg CO₂e</div>
+        </div>
+    </div>
+    """)
+
+    # 3. Interactive Charts
+    st.markdown("##### Visual Analytics: Multi-Axis Radar & Property Breakdown")
+    c_tab1, c_tab2 = st.tabs(["🕸️ Multidimensional Radar", "📊 Metric Subplots (WVTR, OTR, Cost, CO₂e)"])
+    with c_tab1:
+        fig_r, _ = analytics.create_radar_comparison_chart(selected_mats)
+        st.plotly_chart(fig_r, use_container_width=True)
+    with c_tab2:
+        fig_s = analytics.create_comparator_subplots(selected_mats)
+        st.plotly_chart(fig_s, use_container_width=True)
+
+    # 4. Full-width comparison matrix
+    st.markdown("##### Full Specification Comparison Matrix")
+    matrix_html = render_full_width_comparison_matrix(selected_mats)
+    render_html(matrix_html)
+
+    # 5. Export Actions
+    exp_c1, exp_c2, exp_c3 = st.columns([1, 1, 0.8], gap="small")
+    with exp_c1:
+        csv_rows = []
+        for m in selected_mats:
+            csv_rows.append({
+                "Material": m["name"],
+                "Structure": m.get("structure_type", ""),
+                "Thickness (um)": m.get("nominal_thickness_um", ""),
+                "WVTR (g/m2/d)": m.get("wvtr_g_m2_day", ""),
+                "OTR (cc/m2/d)": m.get("otr_cc_m2_day_atm", ""),
+                "Cost ($/kg)": m.get("cost_index_usd_per_kg", ""),
+                "Carbon (kg CO2e)": m.get("carbon_footprint_kg_co2_per_kg", ""),
+                "Tensile (MPa)": m.get("tensile_strength_mpa", ""),
+                "Recyclability": m.get("recyclability_status", ""),
+                "Food Contact": m.get("food_contact_compliance", "")
+            })
+        csv_b = pd.DataFrame(csv_rows).to_csv(index=False).encode("utf-8")
+        st.download_button("📥 Export CSV", data=csv_b, file_name="FoodPackAI_Comparison.csv", mime="text/csv", type="primary", use_container_width=True)
+
+    with exp_c2:
+        try:
+            food_lbl = active_food.get("name", "Comparative Audit") if active_food else "Comparative Audit"
+            pdf_b = pdf_generator.generate_comparator_pdf(selected_mats, food_lbl)
+            st.download_button("📄 Export PDF Report", data=pdf_b, file_name="FoodPackAI_Comparison.pdf", mime="application/pdf", type="primary", use_container_width=True)
+        except Exception as e:
+            st.error(f"PDF export error: {e}")
+
+    with exp_c3:
+        if st.button("Close Dialog", use_container_width=True):
+            st.session_state["show_compare_dialog"] = False
+            st.rerun()
+
+
+# Deep-linking & testing query parameters support
+query_p = st.query_params
+if "cat" in query_p and query_p["cat"] in categories:
+    st.session_state["advisor_category"] = query_p["cat"]
+if "prod" in query_p and (query_p["prod"] in preset_by_name or query_p.get("cat") == "Custom Profile"):
+    st.session_state["advisor_product_name"] = query_p["prod"]
+if "tab" in query_p:
+    tab_val = query_p["tab"]
+    for t in ["🎯 Packaging Advisor", "⚖️ Material Comparator", "⏱️ Shelf-Life Simulator", "🔬 Multi-Criteria Explorer"]:
+        if tab_val.lower() in t.lower():
+            st.session_state["active_tab"] = t
+            st.session_state["main_nav_pills"] = t
+if "basket" in query_p:
+    b_items = [item.strip() for item in query_p["basket"].split(";") if item.strip()]
+    st.session_state["compare_basket"] = b_items[:4]
+if "show_dialog" in query_p and query_p["show_dialog"] == "1":
+    st.session_state["show_compare_dialog"] = True
+if "autorun" in query_p and query_p["autorun"] == "1" and st.session_state.get("analysis_result") is None:
+    p_name = st.session_state.get("advisor_product_name") or "Dry Digestive Biscuits / Cookies"
+    active_p = preset_by_name.get(p_name, all_presets[0] if all_presets else {})
+    if active_p:
+        c_input = {
+            "name": active_p.get("name", "Selected Food"),
+            "category": active_p.get("category", "General"),
+            "moisture_sensitivity": active_p.get("moisture_sensitivity", "Moderate"),
+            "oxygen_sensitivity": active_p.get("oxygen_sensitivity", "Moderate"),
+            "fat_content_level": active_p.get("fat_content_level", "Low"),
+            "light_sensitivity": active_p.get("light_sensitivity", "Low"),
+            "storage_temp_c": 23.0,
+            "storage_rh_percent": 65.0,
+            "target_shelf_life_days": int(active_p.get("target_shelf_life_days", 180) or 180),
+            "puncture_risk": active_p.get("puncture_risk", "Low")
+        }
+        w_dict = {"barrier": 0.40, "cost": 0.25, "sustainability": 0.25, "mechanical": 0.10}
+        res = recommender.rank_recommendations(all_materials, c_input, w_dict)
+        st.session_state["analysis_result"] = res
+        st.session_state["analysis_profile"] = c_input
+        st.session_state["analysis_weights"] = w_dict
+
+
+# -----------------------------------------------------------------------------
+# Collapsible Sidebar (Platform Info, Compare Basket, Shortlist, History)
 # -----------------------------------------------------------------------------
 with st.sidebar:
     if os.path.exists("assets/logo.svg"):
@@ -259,9 +602,62 @@ with st.sidebar:
         "Intelligent packaging decision support for shelf-life protection and circularity."
         "</p>"
     )
-    render_html("<hr style='border: 0; border-top: 1px solid var(--border-color); margin: 8px 0 14px 0;' />")
+    render_html("<hr style='border: 0; border-top: 1px solid var(--border-color); margin: 8px 0 12px 0;' />")
 
-    # 1. Saved Material Shortlist Section
+    # 1. ALWAYS-VISIBLE COMPARE BASKET (Max 4 items with thumbnails, remove X, Compare Now)
+    compare_basket = st.session_state.get("compare_basket", [])
+    basket_count = len(compare_basket)
+
+    render_html(f"""
+    <div class="compare-basket-box">
+        <div class="compare-basket-header">
+            <span class="compare-basket-title">⚖️ Compare Basket</span>
+            <span class="compare-basket-badge">{basket_count} / 4</span>
+        </div>
+    </div>
+    """)
+
+    if not compare_basket:
+        render_html("<p style='font-size: 0.76rem; color: var(--text-muted); margin: 2px 0 8px 0;'>No materials selected. Click <b>➕ Add to Compare</b> on any material card (up to 4).</p>")
+    else:
+        for b_idx, b_mat_name in enumerate(list(compare_basket)):
+            b_col1, b_col2 = st.columns([4.2, 1])
+            with b_col1:
+                b_img_path = get_material_image_path(b_mat_name)
+                b_img_b64 = get_image_base64(b_img_path)
+                b_thumb = f"<img src='{b_img_b64}' class='compare-basket-thumb' />" if b_img_b64 else "<div style='width:32px;height:32px;background:#E2E8F0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;'>📦</div>"
+                render_html(f"""
+                <div class="compare-basket-item" style="margin-bottom: 4px;">
+                    {b_thumb}
+                    <div class="compare-basket-title" title="{b_mat_name}">{b_mat_name.split('(')[0].strip()}</div>
+                </div>
+                """)
+            with b_col2:
+                if st.button("✕", key=f"btn_rm_bsk_{b_idx}_{b_mat_name[:8]}", help=f"Remove {b_mat_name}"):
+                    st.session_state["compare_basket"].remove(b_mat_name)
+                    st.rerun()
+
+        # Action Buttons
+        render_html("<div style='margin-top: 8px;'></div>")
+        cmp_now_btn = st.button(
+            f"🚀 Compare Now ({basket_count})",
+            type="primary",
+            use_container_width=True,
+            key="btn_sidebar_compare_now",
+            disabled=(basket_count < 2),
+            help="Compare selected materials side-by-side in dialog" if basket_count >= 2 else "Select at least 2 materials to compare"
+        )
+        if cmp_now_btn:
+            st.session_state["show_compare_dialog"] = True
+            st.rerun()
+
+        if st.button("Clear Basket", use_container_width=True, key="btn_clear_basket"):
+            st.session_state["compare_basket"] = []
+            st.rerun()
+
+    render_html("<hr style='border: 0; border-top: 1px solid var(--border-color); margin: 12px 0 12px 0;' />")
+
+    # 2. Saved Material Shortlist Section
     shortlist = st.session_state.get("material_shortlist", [])
     with st.expander(f"⭐ Saved Shortlist ({len(shortlist)})", expanded=bool(shortlist)):
         if not shortlist:
@@ -284,7 +680,7 @@ with st.sidebar:
                     st.session_state["scroll_to_workspace"] = True
                     st.rerun()
 
-    # 2. Recent Analysis History Section
+    # 3. Recent Analysis History Section
     with st.expander("🕒 Recent Analysis History", expanded=False):
         recent_runs = database.get_recommendation_history(limit=5)
         if not recent_runs:
@@ -364,13 +760,12 @@ with st.container(key="hero_container"):
     with hero_col1:
         render_html(
             """
-            <div class="hero-badge">✨ AI-Powered Intelligent Food Packaging Platform</div>
+            <div class="hero-badge">🌱 ORGANIC INTELLIGENCE × ADVANCED MATERIALS SCIENCE</div>
             <div class="hero-title">
-                Smart FoodPack <span class="gradient-heading">AI</span>
+                Engineer Better Packaging.<br/><span class="gradient-heading">Preserve More Food.</span>
             </div>
             <div class="hero-subtitle">
-                Next-Gen Material Decision Intelligence, Barrier Physics &amp; Shelf-Life Kinetics. 
-                Eliminating food degradation and packaging waste through transparent, physics-grounded engineering.
+                An intelligent research platform for exploring packaging materials, evaluating protection requirements, comparing alternatives, and making evidence-aware food preservation decisions.
             </div>
             """
         )
@@ -392,15 +787,16 @@ with st.container(key="hero_container"):
             st.session_state["scroll_to_workspace"] = True
             st.rerun()
 
+        total_commodities_count = len(all_presets)
         render_html(
-            """
+            f"""
             <div class="hero-stats-row">
                 <div class="hero-stat-box">
-                    <span class="hero-stat-number">16+</span>
+                    <span class="hero-stat-number">{len(all_materials)}+</span>
                     <span class="hero-stat-label">ASTM Benchmarks</span>
                 </div>
                 <div class="hero-stat-box">
-                    <span class="hero-stat-number">12</span>
+                    <span class="hero-stat-number">{total_commodities_count}</span>
                     <span class="hero-stat-label">Food Commodities</span>
                 </div>
                 <div class="hero-stat-box">
@@ -496,6 +892,12 @@ if nav_choice and nav_choice != st.session_state["active_tab"]:
 
 active_tab = st.session_state["active_tab"]
 
+# Check if Universal Compare Dialog is active
+if st.session_state.get("show_compare_dialog"):
+    current_food_name = st.session_state.get("advisor_product_name", "Butter Cookie (Shortbread)")
+    active_food_preset_obj = preset_by_name.get(current_food_name, all_presets[0])
+    compare_materials_dialog(st.session_state.get("compare_basket", []), active_food_preset_obj)
+
 
 # =============================================================================
 # TAB 1: PACKAGING ADVISOR (Primary 5-Step Workflow & Clean Dashboard)
@@ -552,17 +954,17 @@ if active_tab == "🎯 Packaging Advisor":
     # -------------------------------------------------------------------------
     # B. Steps 1 & 2: Food Profile & Preferences (Two-Column Input Grid)
     # -------------------------------------------------------------------------
-    step_col1, step_col2 = st.columns([1, 1], gap="large")
+    step_col1, step_col2 = st.columns([1.05, 0.95], gap="large")
 
     with step_col1:
-        st.markdown("### Choose Your Food Product")
+        st.markdown("### 1. Select Food Product")
         render_html(
-            "<p style='color: var(--text-muted); font-size: 0.88rem; margin-top: -8px;'>"
-            "Select a food category and product profile, or configure a custom profile to assess barrier and shelf-life requirements."
+            "<p style='color: var(--text-muted); font-size: 0.88rem; margin-top: -8px; margin-bottom: 12px;'>"
+            "Filter verified food commodity profiles by category and click a card to select:"
             "</p>"
         )
 
-        # Category Selectbox with stable state key
+        # Category Selectbox with session state sync
         cat_index = categories.index(st.session_state["advisor_category"]) if st.session_state["advisor_category"] in categories else 0
         selected_cat = st.selectbox(
             "Food Category",
@@ -571,174 +973,106 @@ if active_tab == "🎯 Packaging Advisor":
             key="advisor_food_category",
             help="Select food sector to filter verified food commodity profiles."
         )
-        st.session_state["advisor_category"] = selected_cat
+        if selected_cat != st.session_state.get("advisor_category"):
+            st.session_state["advisor_category"] = selected_cat
+            # If switching category, reset product selection
+            if selected_cat != "Custom Profile":
+                st.session_state["advisor_product_name"] = None
+            st.rerun()
 
-        # Product Selectbox dynamically filtered by category
+        # Product selection flow
         if selected_cat != "Custom Profile":
             filtered_presets = [p["name"] for p in all_presets if p["category"] == selected_cat]
             if not filtered_presets:
                 filtered_presets = [p["name"] for p in all_presets]
 
             current_prod = st.session_state.get("advisor_product_name")
-            if current_prod not in filtered_presets:
-                current_prod = filtered_presets[0]
-                st.session_state["advisor_product_name"] = current_prod
+            if current_prod and current_prod not in filtered_presets:
+                current_prod = None
+                st.session_state["advisor_product_name"] = None
 
-            # Interactive Food Product Visual Cards (Grid) with light theme & active orange glow ring
+            # Interactive Food Product Visual Cards Grid (3 columns)
             if filtered_presets:
-                card_cols = st.columns(min(len(filtered_presets), 3))
+                card_cols = st.columns(3)
                 for idx, p_name in enumerate(filtered_presets):
                     p_obj = preset_by_name.get(p_name, {})
                     is_active = (p_name == current_prod)
-                    with card_cols[idx % len(card_cols)]:
-                        card_border = "border: 2px solid #FF8A00; box-shadow: 0 0 16px rgba(255, 138, 0, 0.35); background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF7 100%);" if is_active else "border: 1px solid var(--border-color); background: #FFFFFF;"
-                        status_tag = "<span style='background: var(--primary-gradient); color: #FFF; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 8px;'>SELECTED</span>" if is_active else f"<span style='font-size: 0.70rem; color: var(--text-muted);'>{FOOD_EMOJI_MAP.get(p_name, '📦')} Profile</span>"
+                    with card_cols[idx % 3]:
+                        card_class = "food-card-wrapper selected" if is_active else "food-card-wrapper"
+                        status_tag = "<span class='food-card-badge'>✓ SELECTED</span>" if is_active else f"<span class='food-card-badge-unselected'>{FOOD_EMOJI_MAP.get(p_name, '📦')} Profile</span>"
                         render_html(f"""
-                        <div style="{card_border} border-radius: 10px; padding: 8px 10px; margin-bottom: 6px; transition: all 0.2s ease;">
+                        <div class="{card_class}">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                                 {status_tag}
-                                <span style="font-size: 0.68rem; color: var(--text-muted);">{p_obj.get('target_shelf_life_days', 180)}d target</span>
+                                <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: 600;">{p_obj.get('target_shelf_life_days', 180)}d target</span>
                             </div>
-                            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); line-height: 1.25; min-height: 32px; display: flex; align-items: center;">
-                                {p_name}
-                            </div>
+                            <div class="food-card-title">{p_name}</div>
                         </div>
                         """)
-                        card_img = get_food_image_path(p_obj.get("category", selected_cat), p_name)
+                        card_img = get_food_image_path(p_obj.get("category", selected_cat), p_name, p_obj.get("image_path", ""))
                         if card_img and os.path.exists(card_img):
                             st.image(card_img, use_container_width=True)
-                        btn_label = f"✓ {p_name.split()[0]}" if is_active else f"Select {p_name.split()[0]}"
+                        else:
+                            st.image("assets/products/placeholder_food.jpg", use_container_width=True)
+
+                        btn_label = "✓ Selected" if is_active else "Select"
                         btn_type = "primary" if is_active else "secondary"
                         if st.button(btn_label, key=f"fcard_btn_{idx}_{p_name}", type=btn_type, use_container_width=True):
                             st.session_state["advisor_product_name"] = p_name
+                            st.session_state["advisor_storage_temp"] = float(p_obj.get("recommended_temp_c", 23.0))
+                            st.session_state["advisor_storage_rh"] = int(p_obj.get("recommended_rh_percent", 60))
+                            st.session_state["advisor_target_days"] = int(p_obj.get("target_shelf_life_days", 180))
                             st.rerun()
 
-            prod_index = filtered_presets.index(st.session_state["advisor_product_name"]) if st.session_state["advisor_product_name"] in filtered_presets else 0
-            selected_product_name = st.selectbox(
-                "Food Product Profile",
-                options=filtered_presets,
-                index=prod_index,
-                key="advisor_food_product",
-                help="Choose specific food commodity baseline to load verified physical sensitivity parameters."
-            )
-            st.session_state["advisor_product_name"] = selected_product_name
-            active_preset = preset_by_name.get(selected_product_name, all_presets[0])
+            active_preset = preset_by_name.get(current_prod) if current_prod else None
         else:
             selected_product_name = st.text_input(
                 "Custom Product Name",
-                value=st.session_state.get("advisor_product_name", "Custom Moisture-Sensitive Food"),
+                value=st.session_state.get("advisor_product_name") or "Custom Food Product",
                 key="advisor_custom_name",
                 help="Enter custom commodity name."
             )
             st.session_state["advisor_product_name"] = selected_product_name
+            
+            c_col1, c_col2 = st.columns(2)
+            with c_col1:
+                c_moist = st.selectbox("Moisture Sensitivity", ["Extreme", "Critical", "High", "Moderate", "Low"], index=2, key="c_moist")
+                c_fat = st.selectbox("Fat Content Level", ["Very High", "High", "Medium-High", "Moderate", "Low-Medium", "Low", "Zero"], index=3, key="c_fat")
+            with c_col2:
+                c_oxy = st.selectbox("Oxygen Sensitivity", ["Critical", "High", "Moderate", "Low"], index=2, key="c_oxy")
+                c_aw = st.number_input("Critical Water Activity (aw)", min_value=0.10, max_value=0.99, value=0.60, step=0.05, key="c_aw")
+            c_spoilage = st.text_input("Typical Spoilage Mode", value="Moisture absorption & lipid oxidation", key="c_spoilage")
+            
             active_preset = {
                 "name": selected_product_name,
-                "category": "Custom",
-                "moisture_sensitivity": "High",
-                "oxygen_sensitivity": "Moderate",
-                "fat_content_level": "Moderate",
-                "light_sensitivity": "Low",
+                "category": "Custom Profile",
+                "moisture_sensitivity": c_moist,
+                "oxygen_sensitivity": c_oxy,
+                "fat_content_level": c_fat,
+                "light_sensitivity": "Moderate",
                 "recommended_temp_c": 23.0,
                 "recommended_rh_percent": 60.0,
                 "target_shelf_life_days": 180,
                 "puncture_risk": "Low",
-                "typical_spoilage_mode": "Customized barrier degradation"
+                "typical_spoilage_mode": c_spoilage,
+                "critical_aw": float(c_aw),
+                "image_path": "assets/products/placeholder_food.jpg",
+                "source": "Custom User Specification"
             }
 
-        # Real-time Food Profile Summary Card using verified database preset data with product visual
-        spoilage_mode = active_preset.get("typical_spoilage_mode", "Moisture / oxygen degradation")
-        crit_aw_val = active_preset.get("critical_aw")
-        crit_aw_str = f"{crit_aw_val:.2f}" if crit_aw_val is not None else "N/A"
-        food_img = get_food_image_path(active_preset.get("category", selected_cat), active_preset.get("name", ""))
-
-        if food_img and os.path.exists(food_img):
-            f_img_col, f_info_col = st.columns([1, 1.8], gap="medium")
-            with f_img_col:
-                st.image(food_img, caption=f"Product: {active_preset.get('name')}", use_container_width=True)
-            with f_info_col:
-                render_html(f"""
-                <div class="profile-summary-card" style="margin-top: 0; border: 2px solid var(--primary-orange); box-shadow: 0 4px 16px rgba(255, 138, 0, 0.18);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary-deep); text-transform: uppercase; letter-spacing: 0.04em;">
-                            🌿 Verified Profile
-                        </span>
-                        <span class="meta-badge" style="background-color: var(--primary-light); color: var(--primary-deep); margin: 0; font-weight: 700; border-color: rgba(255,138,0,0.3);">
-                            {active_preset.get('category', 'Custom')}
-                        </span>
-                    </div>
-                    <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; font-family: 'Poppins', sans-serif;">
-                        {active_preset.get('name', 'Food Product')}
-                    </div>
-                    <div style="font-size: 0.80rem; color: var(--text-muted); line-height: 1.35; margin-bottom: 8px;">
-                        <b>Spoilage Mode:</b> {spoilage_mode}
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 0.76rem;">
-                        <div style="background: var(--card-sub); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-                            <span style="color: var(--text-light); display: block; font-size: 0.70rem;">Moisture Sensitivity</span>
-                            <span style="font-weight: 700; color: var(--text-main);">{active_preset.get('moisture_sensitivity', 'Moderate')}</span>
-                        </div>
-                        <div style="background: var(--card-sub); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-                            <span style="color: var(--text-light); display: block; font-size: 0.70rem;">Oxygen Sensitivity</span>
-                            <span style="font-weight: 700; color: var(--text-main);">{active_preset.get('oxygen_sensitivity', 'Moderate')}</span>
-                        </div>
-                        <div style="background: var(--card-sub); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-                            <span style="color: var(--text-light); display: block; font-size: 0.70rem;">Fat Level</span>
-                            <span style="font-weight: 700; color: var(--text-main);">{active_preset.get('fat_content_level', 'Low')}</span>
-                        </div>
-                        <div style="background: var(--card-sub); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-                            <span style="color: var(--text-light); display: block; font-size: 0.70rem;">Critical aw</span>
-                            <span style="font-weight: 800; color: var(--primary-deep);">{crit_aw_str}</span>
-                        </div>
-                    </div>
-                </div>
-                """)
-        else:
-            render_html(f"""
-            <div class="profile-summary-card" style="border: 2px solid var(--primary-orange); box-shadow: 0 4px 16px rgba(255, 138, 0, 0.18);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary-deep); text-transform: uppercase; letter-spacing: 0.04em;">
-                        🌿 Verified Product Profile
-                    </span>
-                    <span class="meta-badge" style="background-color: var(--primary-light); color: var(--primary-deep); margin: 0; font-weight: 700; border-color: rgba(255,138,0,0.3);">
-                        {active_preset.get('category', 'Custom')}
-                    </span>
-                </div>
-                <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; font-family: 'Poppins', sans-serif;">
-                    {active_preset.get('name', 'Food Product')}
-                </div>
-                <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">
-                    <b>Primary Degradation:</b> {spoilage_mode}
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 0.78rem;">
-                    <div style="background: var(--card-sub); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-                        <span style="color: var(--text-light); display: block; font-size: 0.70rem;">Moisture Sens.</span>
-                        <span style="font-weight: 700; color: var(--text-main);">{active_preset.get('moisture_sensitivity', 'Moderate')}</span>
-                    </div>
-                    <div style="background: var(--card-sub); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-                        <span style="color: var(--text-light); display: block; font-size: 0.70rem;">Oxygen Sens.</span>
-                        <span style="font-weight: 700; color: var(--text-main);">{active_preset.get('oxygen_sensitivity', 'Moderate')}</span>
-                    </div>
-                    <div style="background: var(--card-sub); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-                        <span style="color: var(--text-light); display: block; font-size: 0.70rem;">Fat Content</span>
-                        <span style="font-weight: 700; color: var(--text-main);">{active_preset.get('fat_content_level', 'Low')}</span>
-                    </div>
-                    <div style="background: var(--card-sub); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-                        <span style="color: var(--text-light); display: block; font-size: 0.70rem;">Critical a_w</span>
-                        <span style="font-weight: 800; color: var(--primary-deep);">{crit_aw_str}</span>
-                    </div>
-                </div>
-            </div>
-            """)
-
-        # Food Storage & Environmental Parameters
-        render_html("<div style='font-size: 0.88rem; font-weight: 600; color: var(--text-main); margin-top: 10px; margin-bottom: 6px;'>Storage & Environmental Constraints:</div>")
+        # Food Storage & Environmental Parameters in step_col1
+        render_html("<div style='font-size: 0.92rem; font-weight: 700; color: var(--forest-deep); margin-top: 18px; margin-bottom: 8px;'>Storage & Environmental Constraints</div>")
         env_col1, env_col2 = st.columns(2)
+        default_temp = float(active_preset.get("recommended_temp_c", 23.0)) if active_preset else 23.0
+        default_rh = int(active_preset.get("recommended_rh_percent", 60)) if active_preset else 60
+        default_days = int(active_preset.get("target_shelf_life_days", 180)) if active_preset else 180
+
         with env_col1:
             storage_temp = st.number_input(
                 "Storage Temperature (°C)",
                 min_value=-25.0,
                 max_value=60.0,
-                value=float(active_preset.get("recommended_temp_c", 23.0)),
+                value=float(st.session_state.get("advisor_storage_temp", default_temp)),
                 step=1.0,
                 key="advisor_storage_temp",
                 help="Ambient warehousing temperature for Arrhenius permeation scaling."
@@ -748,7 +1082,7 @@ if active_tab == "🎯 Packaging Advisor":
                 "Ambient Humidity (% RH)",
                 min_value=10,
                 max_value=95,
-                value=int(active_preset.get("recommended_rh_percent", 60)),
+                value=int(st.session_state.get("advisor_storage_rh", default_rh)),
                 step=5,
                 key="advisor_storage_rh",
                 help="Ambient relative humidity governing driving vapor pressure."
@@ -760,7 +1094,7 @@ if active_tab == "🎯 Packaging Advisor":
                 "Target Shelf Life (Days)",
                 min_value=7,
                 max_value=730,
-                value=int(active_preset.get("target_shelf_life_days", 180)),
+                value=int(st.session_state.get("advisor_target_days", default_days)),
                 step=15,
                 key="advisor_target_days",
                 help="Required commercial distribution shelf life."
@@ -777,6 +1111,71 @@ if active_tab == "🎯 Packaging Advisor":
             )
 
     with step_col2:
+        st.markdown("### Selected Product Profile")
+        if active_preset:
+            spoilage_mode = active_preset.get("typical_spoilage_mode", "Moisture / oxygen degradation")
+            crit_aw_val = active_preset.get("critical_aw")
+            crit_aw_str = f"{crit_aw_val:.2f}" if crit_aw_val is not None else "N/A"
+            food_img = get_food_image_path(active_preset.get("category", selected_cat), active_preset.get("name", ""), active_preset.get("image_path", ""))
+            source_note = active_preset.get("source", "Standard Food Science Literature")
+
+            f_img_col, f_info_col = st.columns([1, 1.4], gap="medium")
+            with f_img_col:
+                if food_img and os.path.exists(food_img):
+                    st.image(food_img, caption=f"Product: {active_preset.get('name')}", use_container_width=True)
+                else:
+                    st.image("assets/products/placeholder_food.jpg", caption=f"Product: {active_preset.get('name')}", use_container_width=True)
+            with f_info_col:
+                render_html(f"""
+                <div class="summary-panel-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 0.78rem; font-weight: 800; color: var(--forest-deep); text-transform: uppercase; letter-spacing: 0.05em;">
+                            🌿 Verified Profile
+                        </span>
+                        <span class="meta-badge" style="background-color: var(--primary-light); color: var(--primary-deep); margin: 0; font-weight: 700; border: 1px solid rgba(233, 120, 61, 0.3);">
+                            {active_preset.get('category', 'Custom')}
+                        </span>
+                    </div>
+                    <div style="font-size: 1.10rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; font-family: 'Poppins', sans-serif;">
+                        {active_preset.get('name', 'Food Product')}
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-main); line-height: 1.4; margin-bottom: 10px; background: rgba(23, 61, 50, 0.05); padding: 6px 10px; border-radius: 6px; border-left: 3px solid var(--forest-deep);">
+                        <b>Spoilage Mode:</b> {spoilage_mode}
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 0.78rem;">
+                        <div class="summary-metric-tile">
+                            <span class="summary-metric-label">Moisture Sens.</span>
+                            <span class="summary-metric-value">{active_preset.get('moisture_sensitivity', 'Moderate')}</span>
+                        </div>
+                        <div class="summary-metric-tile">
+                            <span class="summary-metric-label">Oxygen Sens.</span>
+                            <span class="summary-metric-value">{active_preset.get('oxygen_sensitivity', 'Moderate')}</span>
+                        </div>
+                        <div class="summary-metric-tile">
+                            <span class="summary-metric-label">Fat Level</span>
+                            <span class="summary-metric-value">{active_preset.get('fat_content_level', 'Low')}</span>
+                        </div>
+                        <div class="summary-metric-tile">
+                            <span class="summary-metric-label">Critical aw</span>
+                            <span class="summary-metric-value" style="color: var(--primary-deep); font-weight: 800;">{crit_aw_str}</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.72rem; color: var(--text-light); line-height: 1.35;">
+                        <b>Source:</b> {source_note}
+                    </div>
+                </div>
+                """)
+        else:
+            render_html("""
+            <div class="summary-empty-state">
+                <div style="font-size: 2.2rem; margin-bottom: 8px;">🍽️</div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: var(--forest-deep); margin-bottom: 6px;">No Food Product Selected</div>
+                <p style="color: var(--text-muted); font-size: 0.86rem; line-height: 1.45; margin: 0 auto; max-width: 360px;">
+                    Click <b>Select</b> on any product card on the left to inspect its physical sensitivities and unlock packaging analysis.
+                </p>
+            </div>
+            """)
+
         st.markdown("### Set Decision Preferences")
         render_html(
             "<p style='color: var(--text-muted); font-size: 0.88rem; margin-top: -8px;'>"
@@ -824,25 +1223,35 @@ if active_tab == "🎯 Packaging Advisor":
             w_mech = wm_slider / w_total
             st.caption(f"Normalized Weights: Barrier {w_barrier*100:.0f}%, Cost {w_cost*100:.0f}%, Circularity {w_sust*100:.0f}%, Mech {w_mech*100:.0f}%")
 
-        # Regulatory & Safety Gate Notice
-        render_html(
-            """
-            <div style="background-color: var(--soft-mint); border: 1px solid var(--mint-border); border-radius: 8px; padding: 12px 16px; margin-top: 14px;">
-                <p style="color: var(--primary-emerald); font-size: 0.82rem; margin: 0; font-weight: 500;">
+        # Mandatory Regulatory Screening & Safety Gates moved to st.expander
+        with st.expander("🛡️ Mandatory Regulatory Screening & Safety Gates", expanded=False):
+            render_html(
+                """
+                <div style="font-size: 0.86rem; color: var(--text-main); line-height: 1.55; padding: 4px 0;">
                     <b>Mandatory Regulatory Screening:</b> All materials undergo Stage-1 physics knockout filters 
-                    (moisture/oxygen threshold, thermal tolerance, puncture hazard) and FDA 21 CFR §177 / EU 10/2011 
-                    food-contact compliance verification before scoring.
-                </p>
-            </div>
-            """
-        )
+                    (moisture/oxygen threshold, thermal tolerance, puncture hazard) and verified 
+                    <b>US FDA 21 CFR §177</b> / <b>EU Regulation 10/2011</b> food-contact compliance screening 
+                    before multi-criteria scoring.
+                </div>
+                """
+            )
 
-        render_html("<div style='margin-top: 24px;'></div>")
+        render_html("<div style='margin-top: 18px;'></div>")
 
         # ---------------------------------------------------------------------
         # STEP 3 — Prominent Action Button: "Analyze Packaging"
         # ---------------------------------------------------------------------
-        analyze_clicked = st.button("🔍 Analyze Packaging", type="primary", use_container_width=True, key="btn_run_analysis")
+        is_analyzable = (active_preset is not None)
+        analyze_clicked = st.button(
+            "🔍 Analyze Packaging",
+            type="primary",
+            use_container_width=True,
+            key="btn_run_analysis",
+            disabled=(not is_analyzable),
+            help="Run physical barrier filters and MCDA analysis" if is_analyzable else "Select a food product card on the left to enable analysis"
+        )
+        if not is_analyzable:
+            render_html("<p style='text-align: center; color: var(--text-muted); font-size: 0.80rem; margin-top: 6px;'>👈 Select a food product above to unlock packaging analysis.</p>")
 
         if analyze_clicked:
             # 1. Validation
@@ -944,7 +1353,7 @@ if active_tab == "🎯 Packaging Advisor":
                                     particleCount: 75,
                                     spread: 80,
                                     origin: { y: 0.6 },
-                                    colors: ['#FF8A00', '#FFB300', '#FF5722', '#FFE082', '#4CAF50']
+                                    colors: ['#E9783D', '#D8672C', '#173D32', '#E9B44C', '#A7BCA7']
                                 });
                             }
                         }, 250);
@@ -963,46 +1372,181 @@ if active_tab == "🎯 Packaging Advisor":
             top_img_b64 = get_image_base64(top_mat_img)
 
             # -----------------------------------------------------------------
-            # 1. 3D Recommendation Podium (🥇 🥈 🥉)
+            # 0. TOP VERDICT CARD (Clear recommendation, physical reasoning, shelf life, export actions)
+            # -----------------------------------------------------------------
+            wvtr_top = float(top_cand.get("wvtr_g_m2_day", 1.0))
+            otr_top = float(top_cand.get("otr_cc_m2_day_atm", 1.0))
+            try:
+                s_calc = shelf_life.estimate_combined_shelf_life(
+                    wvtr_standard=wvtr_top,
+                    otr_standard=otr_top,
+                    package_surface_area_m2=analysis_prof.get("package_surface_area_m2", 0.04),
+                    product_dry_weight_g=150.0,
+                    initial_moisture_percent=2.0,
+                    critical_moisture_percent=5.0,
+                    headspace_volume_cc=100.0,
+                    initial_headspace_o2_percent=0.5,
+                    critical_headspace_o2_percent=2.0,
+                    ambient_temp_c=float(analysis_prof.get("storage_temp_c", 23.0)),
+                    ambient_rh_percent=float(analysis_prof.get("storage_rh_percent", 60.0))
+                )
+                est_shelf_days = int(s_calc.get("limiting_days", analysis_prof.get("target_shelf_life_days", 180)))
+            except Exception:
+                est_shelf_days = int(analysis_prof.get("target_shelf_life_days", 180))
+
+            m_sens = analysis_prof.get('moisture_sensitivity', 'Moderate')
+            o_sens = analysis_prof.get('oxygen_sensitivity', 'Moderate')
+            t_deg = analysis_prof.get('storage_temp_c', 23.0)
+            rh_p = analysis_prof.get('storage_rh_percent', 60.0)
+
+            render_html(f"""
+            <div class="verdict-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                    <div style="flex: 1; min-width: 280px;">
+                        <div class="verdict-badge-lead">🎯 Top Engineering Recommendation</div>
+                        <div class="verdict-title" style="margin-top: 6px;">
+                            Recommended: <span style="color: var(--primary-deep);">{top_cand['name']}</span> for <span style="color: var(--forest-deep);">{analysis_prof['name']}</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 14px; align-items: center; background: #FFFFFF; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 18px; box-shadow: var(--shadow-sm);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.68rem; font-weight: 700; color: var(--text-light); text-transform: uppercase;">MCDA Score</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: var(--primary-deep); font-family: 'Poppins', sans-serif;">{top_score_val:.1f} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">/ 100</span></div>
+                        </div>
+                        <div style="border-left: 1px solid var(--border-color); height: 32px;"></div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.68rem; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Est. Shelf Life</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: var(--forest-deep); font-family: 'Poppins', sans-serif;">{est_shelf_days} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">days</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="verdict-reasoning">
+                    <b>Physical Barrier Match:</b> {analysis_prof['name']} exhibits <b>{m_sens}</b> moisture sensitivity and <b>{o_sens}</b> oxygen sensitivity. 
+                    <b>{top_cand['name']}</b> provides a high-barrier profile with WVTR <b>{top_cand.get('wvtr_g_m2_day')} g/m²/day</b> and OTR <b>{top_cand.get('otr_cc_m2_day_atm')} cc/m²/day/atm</b>, 
+                    delivering an estimated shelf life of <b>{est_shelf_days} days</b> under {t_deg}°C / {rh_p}% RH while complying with US FDA 21 CFR §177 and EU Regulation 10/2011 criteria.
+                </div>
+            </div>
+            """)
+
+            # Quick Verdict Action Buttons (Export PDF, Export CSV, Add Winner to Basket)
+            v_act1, v_act2, v_act3 = st.columns([1.2, 1.2, 1.2], gap="small")
+            clean_name = "".join(c for c in analysis_prof["name"] if c.isalnum() or c in (" ", "_")).replace(" ", "_")
+            with v_act1:
+                try:
+                    pdf_bytes = pdf_generator.generate_recommendation_pdf(analysis_prof, analysis_res, analysis_w)
+                    st.download_button(
+                        label="📄 Download PDF Report",
+                        data=pdf_bytes,
+                        file_name=f"FoodPackAI_Report_{clean_name}.pdf",
+                        mime="application/pdf",
+                        type="primary",
+                        use_container_width=True,
+                        key="btn_verdict_export_pdf"
+                    )
+                except Exception as e:
+                    st.error(f"PDF export error: {e}")
+
+            with v_act2:
+                res_csv_rows = []
+                for c_i in top_candidates:
+                    res_csv_rows.append({
+                        "Rank": c_i.get("rank", ""),
+                        "Material": c_i.get("name", ""),
+                        "MCDA Score": round(float(c_i.get("total_mcda_score", 0)), 1),
+                        "WVTR (g/m2/d)": c_i.get("wvtr_g_m2_day"),
+                        "OTR (cc/m2/d)": c_i.get("otr_cc_m2_day_atm"),
+                        "Cost ($/kg)": c_i.get("cost_index_usd_per_kg"),
+                        "Carbon Footprint": c_i.get("carbon_footprint_kg_co2_per_kg"),
+                        "Tensile Strength": c_i.get("tensile_strength_mpa"),
+                        "Structure": c_i.get("structure_type"),
+                        "Recyclability": c_i.get("recyclability_status"),
+                        "Compliance": c_i.get("food_contact_compliance")
+                    })
+                csv_bytes_res = pd.DataFrame(res_csv_rows).to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    label="📥 Export Results CSV",
+                    data=csv_bytes_res,
+                    file_name=f"FoodPackAI_Recommendations_{clean_name}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                    key="btn_verdict_export_csv"
+                )
+
+            with v_act3:
+                is_top_in_bsk = top_cand["name"] in st.session_state.get("compare_basket", [])
+                bsk_btn_lbl = "✓ Winner In Basket" if is_top_in_bsk else "⚖️ Add Winner to Basket"
+                bsk_btn_typ = "primary" if is_top_in_bsk else "secondary"
+                if st.button(bsk_btn_lbl, key="btn_add_winner_to_basket", type=bsk_btn_typ, use_container_width=True):
+                    if is_top_in_bsk:
+                        st.session_state["compare_basket"].remove(top_cand["name"])
+                    else:
+                        if len(st.session_state["compare_basket"]) < 4:
+                            st.session_state["compare_basket"].append(top_cand["name"])
+                        else:
+                            st.toast("Compare basket holds up to 4 materials.", icon="⚠️")
+                    st.rerun()
+
+            render_html("<div style='margin-bottom: 20px;'></div>")
+
+            # -----------------------------------------------------------------
+            # 1. 3D Recommendation Podium (🥇 🥈 🥉) with 4 Mini Metric Bars
             # -----------------------------------------------------------------
             st.markdown("### Top Recommendation Podium")
-            
-            rank1_img_tag = f'<img src="{top_img_b64}" style="width: 100%; height: 130px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(0,0,0,0.06);" />' if top_img_b64 else ''
-            
+
+            # Rank 1 bars & badges
+            r1_bars = compute_mini_bars(top_cand)
+            r1_bars_html = "".join(f"""
+            <div class="mini-metric-row">
+                <div class="mini-metric-label-val">
+                    <span class="mini-metric-label">{b['name']}</span>
+                    <span class="mini-metric-val">{b['val_str']}</span>
+                </div>
+                <div class="mini-bar-track">
+                    <div class="mini-bar-fill" style="width: {b['pct']:.1f}%; background-color: {b['color']};"></div>
+                </div>
+            </div>
+            """ for b in r1_bars)
+            r1_rec = get_recyclability_pill(top_cand.get("recyclability_status", ""))
+            rank1_img_tag = f'<img src="{top_img_b64}" style="width: 100%; height: 130px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.06);" />' if top_img_b64 else ''
+
             # Rank 2 (Silver)
             rank2_cand = top_candidates[1] if len(top_candidates) >= 2 else None
             rank2_html = ""
             if rank2_cand:
                 r2_score = rank2_cand.get('total_mcda_score', 0.0)
                 r2_img = get_image_base64(get_material_image_path(rank2_cand.get("name", "")))
-                r2_img_tag = f'<img src="{r2_img}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.06);" />' if r2_img else ''
+                r2_img_tag = f'<img src="{r2_img}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; border: 1px solid rgba(0,0,0,0.06);" />' if r2_img else ''
+                r2_bars = compute_mini_bars(rank2_cand)
+                r2_bars_html = "".join(f"""
+                <div class="mini-metric-row">
+                    <div class="mini-metric-label-val">
+                        <span class="mini-metric-label">{b['name']}</span>
+                        <span class="mini-metric-val">{b['val_str']}</span>
+                    </div>
+                    <div class="mini-bar-track">
+                        <div class="mini-bar-fill" style="width: {b['pct']:.1f}%; background-color: {b['color']};"></div>
+                    </div>
+                </div>
+                """ for b in r2_bars)
+                r2_rec = get_recyclability_pill(rank2_cand.get("recyclability_status", ""))
+
                 rank2_html = f"""
-                <div class="podium-card" style="border: 1.5px solid #CBD5E1; background: #FFFFFF;">
+                <div class="podium-card" style="border: 1.5px solid #94A3B8; background: #FFFFFF;">
                     <div class="podium-badge podium-badge-silver">🥈 Rank #2 Silver</div>
                     {r2_img_tag}
                     <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.3; margin-bottom: 6px;">
                         {rank2_cand.get('name')}
                     </div>
-                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px;">
                         <span class="meta-badge" style="font-size: 0.70rem;">{rank2_cand.get('structure_type', 'Flexible')}</span>
                         <span class="meta-badge" style="font-size: 0.70rem;">{rank2_cand.get('nominal_thickness_um', '-')} µm</span>
                     </div>
-                    <div style="background: var(--card-sub); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; text-align: center; margin-top: 8px;">
-                        <div style="font-size: 0.70rem; color: var(--text-light); text-transform: uppercase; font-weight: 700;">MCDA Composite Score</div>
-                        <div style="font-size: 1.3rem; font-weight: 800; color: #455A64; font-family: 'Poppins', sans-serif;">
-                            {r2_score:.1f} <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 100</span>
-                        </div>
+                    <div style="background: var(--card-sub); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 8px; text-align: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.68rem; color: var(--text-light); text-transform: uppercase; font-weight: 700;">Score: </span>
+                        <b style="font-size: 1.15rem; color: #455A64; font-family: 'Poppins', sans-serif;">{r2_score:.1f}</b> <span style="font-size: 0.72rem; color: var(--text-muted);">/ 100</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 8px; font-size: 0.72rem;">
-                        <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; text-align: center;">
-                            <span style="color: var(--text-muted); display: block;">🛡️ Barrier</span>
-                            <b>{rank2_cand.get('barrier_score', 0):.1f}</b>
-                        </div>
-                        <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; text-align: center;">
-                            <span style="color: var(--text-muted); display: block;">💰 Cost</span>
-                            <b>{rank2_cand.get('cost_score', 0):.1f}</b>
-                        </div>
-                    </div>
+                    <div class="mini-metrics-container">{r2_bars_html}</div>
+                    <div style="margin-top: 6px;">{r2_rec}</div>
                 </div>
                 """
 
@@ -1012,34 +1556,38 @@ if active_tab == "🎯 Packaging Advisor":
             if rank3_cand:
                 r3_score = rank3_cand.get('total_mcda_score', 0.0)
                 r3_img = get_image_base64(get_material_image_path(rank3_cand.get("name", "")))
-                r3_img_tag = f'<img src="{r3_img}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.06);" />' if r3_img else ''
+                r3_img_tag = f'<img src="{r3_img}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; border: 1px solid rgba(0,0,0,0.06);" />' if r3_img else ''
+                r3_bars = compute_mini_bars(rank3_cand)
+                r3_bars_html = "".join(f"""
+                <div class="mini-metric-row">
+                    <div class="mini-metric-label-val">
+                        <span class="mini-metric-label">{b['name']}</span>
+                        <span class="mini-metric-val">{b['val_str']}</span>
+                    </div>
+                    <div class="mini-bar-track">
+                        <div class="mini-bar-fill" style="width: {b['pct']:.1f}%; background-color: {b['color']};"></div>
+                    </div>
+                </div>
+                """ for b in r3_bars)
+                r3_rec = get_recyclability_pill(rank3_cand.get("recyclability_status", ""))
+
                 rank3_html = f"""
-                <div class="podium-card" style="border: 1.5px solid #D7CCC8; background: #FFFFFF;">
+                <div class="podium-card" style="border: 1.5px solid #CBD5E1; background: #FFFFFF;">
                     <div class="podium-badge podium-badge-bronze">🥉 Rank #3 Bronze</div>
                     {r3_img_tag}
                     <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.3; margin-bottom: 6px;">
                         {rank3_cand.get('name')}
                     </div>
-                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px;">
                         <span class="meta-badge" style="font-size: 0.70rem;">{rank3_cand.get('structure_type', 'Flexible')}</span>
                         <span class="meta-badge" style="font-size: 0.70rem;">{rank3_cand.get('nominal_thickness_um', '-')} µm</span>
                     </div>
-                    <div style="background: var(--card-sub); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; text-align: center; margin-top: 8px;">
-                        <div style="font-size: 0.70rem; color: var(--text-light); text-transform: uppercase; font-weight: 700;">MCDA Composite Score</div>
-                        <div style="font-size: 1.3rem; font-weight: 800; color: #5D4037; font-family: 'Poppins', sans-serif;">
-                            {r3_score:.1f} <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 100</span>
-                        </div>
+                    <div style="background: var(--card-sub); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 8px; text-align: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.68rem; color: var(--text-light); text-transform: uppercase; font-weight: 700;">Score: </span>
+                        <b style="font-size: 1.15rem; color: #5D4037; font-family: 'Poppins', sans-serif;">{r3_score:.1f}</b> <span style="font-size: 0.72rem; color: var(--text-muted);">/ 100</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 8px; font-size: 0.72rem;">
-                        <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; text-align: center;">
-                            <span style="color: var(--text-muted); display: block;">🛡️ Barrier</span>
-                            <b>{rank3_cand.get('barrier_score', 0):.1f}</b>
-                        </div>
-                        <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; text-align: center;">
-                            <span style="color: var(--text-muted); display: block;">💰 Cost</span>
-                            <b>{rank3_cand.get('cost_score', 0):.1f}</b>
-                        </div>
-                    </div>
+                    <div class="mini-metrics-container">{r3_bars_html}</div>
+                    <div style="margin-top: 6px;">{r3_rec}</div>
                 </div>
                 """
 
@@ -1047,16 +1595,16 @@ if active_tab == "🎯 Packaging Advisor":
             rank1_html = f"""
             <div class="podium-card podium-rank-1">
                 <div class="podium-badge podium-badge-gold">👑 🥇 Rank #1 Optimal Match</div>
-                <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px; margin-top: 6px;">
+                <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 10px; margin-top: 4px;">
                     <div class="gauge-wrapper" style="flex-shrink: 0; margin: 0;">
                         <svg class="gauge-svg" width="90" height="90" viewBox="0 0 90 90">
                             <defs>
                                 <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#FF8A00" />
-                                    <stop offset="100%" stop-color="#FF5722" />
+                                    <stop offset="0%" stop-color="#E9783D" />
+                                    <stop offset="100%" stop-color="#D8672C" />
                                 </linearGradient>
                             </defs>
-                            <circle cx="45" cy="45" r="36" class="gauge-bg" style="stroke: #FFE082; stroke-width: 7; fill: none;" />
+                            <circle cx="45" cy="45" r="36" class="gauge-bg" style="stroke: #FDEEE6; stroke-width: 7; fill: none;" />
                             <circle cx="45" cy="45" r="36" class="gauge-fill" style="stroke: url(#scoreGrad); stroke-width: 7; fill: none; stroke-linecap: round; stroke-dasharray: 226.2; stroke-dashoffset: {dashoffset:.1f};" />
                         </svg>
                         <div class="gauge-text" style="position: absolute; font-family: 'Poppins', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--primary-deep);">{top_score_val:.0f}</div>
@@ -1069,7 +1617,7 @@ if active_tab == "🎯 Packaging Advisor":
                             Stage-2 Multi-Criteria Synthesis
                         </div>
                         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
-                            <span class="meta-badge" style="background: var(--primary-light); color: var(--primary-deep); font-weight: 700; border-color: rgba(255,138,0,0.3); font-size: 0.70rem;">
+                            <span class="meta-badge" style="background: var(--primary-light); color: var(--primary-deep); font-weight: 700; border-color: rgba(233,120,61,0.3); font-size: 0.70rem;">
                                 {top_cand.get('structure_type', 'Flexible')}
                             </span>
                             <span class="meta-badge" style="font-size: 0.70rem;">{top_cand.get('nominal_thickness_um', '-')} µm</span>
@@ -1077,12 +1625,14 @@ if active_tab == "🎯 Packaging Advisor":
                     </div>
                 </div>
                 {rank1_img_tag}
-                <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); line-height: 1.25; margin: 4px 0 6px 0;">
+                <h3 style="font-size: 1.20rem; font-weight: 800; color: var(--text-main); line-height: 1.25; margin: 4px 0 6px 0;">
                     {top_cand.get('name')}
                 </h3>
-                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0; line-height: 1.45; border-left: 3px solid var(--primary-orange); padding-left: 10px;">
+                <p style="color: var(--text-muted); font-size: 0.80rem; margin-bottom: 8px; line-height: 1.45; border-left: 3px solid var(--primary-orange); padding-left: 10px;">
                     {expl.get('rationale', 'Optimal packaging solution satisfying barrier, cost, and circularity criteria.')}
                 </p>
+                <div class="mini-metrics-container">{r1_bars_html}</div>
+                <div style="margin-top: 6px;">{r1_rec}</div>
             </div>
             """
 
@@ -1110,28 +1660,58 @@ if active_tab == "🎯 Packaging Advisor":
                 """
             render_html(podium_grid_html)
 
-            # Quick Action Buttons: Shortlist Top Winner & Direct Compare
-            p_act_col1, p_act_col2, _ = st.columns([1.2, 1.4, 1.4])
-            with p_act_col1:
-                is_top_sl = top_cand["name"] in st.session_state.get("material_shortlist", [])
-                sl_top_label = "⭐ Shortlisted in Sidebar" if is_top_sl else "⭐ Save Winner to Shortlist"
-                sl_top_type = "primary" if is_top_sl else "secondary"
-                if st.button(sl_top_label, key="btn_shortlist_top_winner", type=sl_top_type, use_container_width=True):
-                    if not is_top_sl:
-                        st.session_state["material_shortlist"].append(top_cand["name"])
+            # Podium Card Compare Toggles Row
+            if rank2_html and rank3_html:
+                pod_btn_c1, pod_btn_c2, pod_btn_c3 = st.columns([1, 1.25, 1])
+                with pod_btn_c1:
+                    if rank2_cand:
+                        in_b2 = rank2_cand["name"] in st.session_state.get("compare_basket", [])
+                        l2 = "✓ In Basket" if in_b2 else "➕ Add to Compare"
+                        t2 = "primary" if in_b2 else "secondary"
+                        can_a2 = in_b2 or len(st.session_state.get("compare_basket", [])) < 4
+                        if st.button(l2, key=f"btn_pod_cmp_r2_{rank2_cand['name'][:6]}", type=t2, disabled=(not can_a2 and not in_b2), use_container_width=True):
+                            if in_b2:
+                                st.session_state["compare_basket"].remove(rank2_cand["name"])
+                            else:
+                                st.session_state["compare_basket"].append(rank2_cand["name"])
+                            st.rerun()
+
+                with pod_btn_c2:
+                    in_b1 = top_cand["name"] in st.session_state.get("compare_basket", [])
+                    l1 = "✓ In Basket" if in_b1 else "➕ Add to Compare"
+                    t1 = "primary" if in_b1 else "secondary"
+                    can_a1 = in_b1 or len(st.session_state.get("compare_basket", [])) < 4
+                    if st.button(l1, key=f"btn_pod_cmp_r1_{top_cand['name'][:6]}", type=t1, disabled=(not can_a1 and not in_b1), use_container_width=True):
+                        if in_b1:
+                            st.session_state["compare_basket"].remove(top_cand["name"])
+                        else:
+                            st.session_state["compare_basket"].append(top_cand["name"])
+                        st.rerun()
+
+                with pod_btn_c3:
+                    if rank3_cand:
+                        in_b3 = rank3_cand["name"] in st.session_state.get("compare_basket", [])
+                        l3 = "✓ In Basket" if in_b3 else "➕ Add to Compare"
+                        t3 = "primary" if in_b3 else "secondary"
+                        can_a3 = in_b3 or len(st.session_state.get("compare_basket", [])) < 4
+                        if st.button(l3, key=f"btn_pod_cmp_r3_{rank3_cand['name'][:6]}", type=t3, disabled=(not can_a3 and not in_b3), use_container_width=True):
+                            if in_b3:
+                                st.session_state["compare_basket"].remove(rank3_cand["name"])
+                            else:
+                                st.session_state["compare_basket"].append(rank3_cand["name"])
+                            st.rerun()
+            else:
+                in_b1 = top_cand["name"] in st.session_state.get("compare_basket", [])
+                l1 = "✓ In Basket" if in_b1 else "➕ Add to Compare"
+                t1 = "primary" if in_b1 else "secondary"
+                if st.button(l1, key=f"btn_pod_cmp_single_{top_cand['name'][:6]}", type=t1, use_container_width=True):
+                    if in_b1:
+                        st.session_state["compare_basket"].remove(top_cand["name"])
                     else:
-                        st.session_state["material_shortlist"].remove(top_cand["name"])
+                        st.session_state["compare_basket"].append(top_cand["name"])
                     st.rerun()
 
-            with p_act_col2:
-                if st.button("⚖️ Compare Top 3 in Comparator", key="btn_compare_top_cands", use_container_width=True):
-                    st.session_state["comparator_selected_mats"] = [c["name"] for c in top_candidates[:3]]
-                    st.session_state["active_tab"] = "⚖️ Material Comparator"
-                    st.session_state["main_nav_pills"] = "⚖️ Material Comparator"
-                    st.session_state["scroll_to_workspace"] = True
-                    st.rerun()
-
-            render_html("<div style='margin-bottom: 16px;'></div>")
+            render_html("<div style='margin-bottom: 20px;'></div>")
 
             # -----------------------------------------------------------------
             # 2. 4 3D Metric Pillar Cards for Rank #1
@@ -1175,8 +1755,8 @@ if active_tab == "🎯 Packaging Advisor":
             # -----------------------------------------------------------------
             # 3. "Why This Material Won?" Explanation Card
             # -----------------------------------------------------------------
-            req_items = "".join(f"<div style='font-size: 0.84rem; color: var(--text-main); margin-bottom: 6px;'>&bull; <span style='color: #2E7D32;'>&#10003;</span> {r}</div>" for r in expl.get("requirements_met", []))
-            lim_items = "".join(f"<div style='font-size: 0.84rem; color: var(--text-main); margin-bottom: 6px;'>&bull; <span style='color: #E65100;'>&#9888;</span> {l}</div>" for l in expl.get("limitations", []))
+            req_items = "".join(f"<div style='font-size: 0.84rem; color: var(--text-main); margin-bottom: 6px;'>&bull; <span style='color: var(--forest-deep); font-weight: 700;'>&#10003;</span> {r}</div>" for r in expl.get("requirements_met", []))
+            lim_items = "".join(f"<div style='font-size: 0.84rem; color: var(--text-main); margin-bottom: 6px;'>&bull; <span style='color: var(--primary-deep); font-weight: 700;'>&#9888;</span> {l}</div>" for l in expl.get("limitations", []))
             mis_items = "".join(f"<div style='font-size: 0.80rem; color: var(--text-light); font-style: italic; margin-bottom: 4px;'>&bull; Literature gap: {m}</div>" for m in expl.get("missing_data", []))
 
             render_html(
@@ -1190,13 +1770,13 @@ if active_tab == "🎯 Packaging Advisor":
                     </p>
                     <div class="why-won-grid">
                         <div style="background: #FFFFFF; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-                            <div style="font-size: 0.82rem; font-weight: 700; color: #2E7D32; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;">
+                            <div style="font-size: 0.82rem; font-weight: 700; color: var(--forest-deep); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;">
                                 ✅ Key Requirements Satisfied
                             </div>
                             {req_items if req_items else "<div style='font-size: 0.84rem; color: var(--text-muted);'>All physical barrier criteria satisfied.</div>"}
                         </div>
                         <div style="background: #FFFFFF; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-                            <div style="font-size: 0.82rem; font-weight: 700; color: #E65100; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;">
+                            <div style="font-size: 0.82rem; font-weight: 700; color: var(--primary-deep); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;">
                                 ⚖️ Operational Considerations &amp; Trade-offs
                             </div>
                             {lim_items if lim_items else "<div style='font-size: 0.84rem; color: var(--text-muted);'>No significant material concessions recorded.</div>"}
@@ -1270,13 +1850,13 @@ if active_tab == "🎯 Packaging Advisor":
                 render_html("<hr style='border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;' />")
                 rm_col1, rm_col2 = st.columns(2)
                 with rm_col1:
-                    render_html("<h5 style='font-size: 0.92rem; color: var(--text-main); margin-bottom: 8px;'>Key Requirements Satisfied</h5>")
+                    render_html("<h5 style='font-size: 0.92rem; color: var(--forest-deep); margin-bottom: 8px;'>Key Requirements Satisfied</h5>")
                     for req in expl.get("requirements_met", []):
-                        render_html(f"<div style='font-size: 0.86rem; color: var(--text-muted); margin-bottom: 4px;'>&bull; <span style='color: var(--primary-accent);'>&#10003;</span> {req}</div>")
+                        render_html(f"<div style='font-size: 0.86rem; color: var(--text-muted); margin-bottom: 4px;'>&bull; <span style='color: var(--forest-deep); font-weight: 700;'>&#10003;</span> {req}</div>")
                 with rm_col2:
-                    render_html("<h5 style='font-size: 0.92rem; color: var(--text-main); margin-bottom: 8px;'>Operational Considerations &amp; Disclosures</h5>")
+                    render_html("<h5 style='font-size: 0.92rem; color: var(--forest-deep); margin-bottom: 8px;'>Operational Considerations &amp; Disclosures</h5>")
                     for lim in expl.get("limitations", []):
-                        render_html(f"<div style='font-size: 0.86rem; color: var(--text-muted); margin-bottom: 4px;'>&bull; <span style='color: var(--accent-warning);'>&#9888;</span> {lim}</div>")
+                        render_html(f"<div style='font-size: 0.86rem; color: var(--text-muted); margin-bottom: 4px;'>&bull; <span style='color: var(--primary-deep); font-weight: 700;'>&#9888;</span> {lim}</div>")
                     for mis in expl.get("missing_data", []):
                         render_html(f"<div style='font-size: 0.84rem; color: #94A3B8; font-style: italic; margin-bottom: 4px;'>&bull; Missing literature datum: {mis}</div>")
 
@@ -1296,7 +1876,7 @@ if active_tab == "🎯 Packaging Advisor":
                     render_html(
                         f"""
                         <div class="tradeoff-box">
-                            <h4 style="font-size: 1.0rem; color: var(--primary-accent); margin-top: 0;">{tradeoffs.get('headline')}</h4>
+                            <h4 style="font-size: 1.0rem; color: var(--forest-deep); margin-top: 0;">{tradeoffs.get('headline')}</h4>
                             <p style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 8px;">{tradeoffs.get('verdict', '')}</p>
                             <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 20px; margin-bottom: 0;">
                                 {"".join(f"<li><b>Advantage:</b> {adv}</li>" for adv in tradeoffs.get('advantages', []))}
@@ -1308,35 +1888,49 @@ if active_tab == "🎯 Packaging Advisor":
                 else:
                     st.info("Top candidate dominates all evaluation criteria for this food commodity.")
 
-            # Multidimensional Radar Comparison for Top 3 candidates
-            if len(top_candidates) >= 2:
-                st.markdown("##### Multi-Axis Performance Radar (Top Candidates)")
-                radar_candidates = top_candidates[:min(3, len(top_candidates))]
+            # Visual Analytics: Multi-Axis Radar and 4 Independent Metric Subplots
+            st.markdown("### Decision Analytics: Multi-Axis Radar & Property Performance")
+            res_chart_tab1, res_chart_tab2 = st.tabs(["🕸️ Performance Radar (Top Candidates)", "📊 Property Subplots (WVTR, OTR, Cost, CO₂e)"])
+            with res_chart_tab1:
+                radar_candidates = top_candidates[:min(4, len(top_candidates))]
                 fig_radar, radar_warnings = analytics.create_radar_comparison_chart(radar_candidates)
                 st.plotly_chart(fig_radar, use_container_width=True)
                 if radar_warnings:
                     for rw in radar_warnings:
                         st.caption(f"ℹ️ {rw}")
+            with res_chart_tab2:
+                fig_sub_res = analytics.create_comparator_subplots(top_candidates[:min(4, len(top_candidates))])
+                st.plotly_chart(fig_sub_res, use_container_width=True)
 
-            # Qualified Alternatives Table
+            # Full-Width Comparison Matrix for Top Ranked Candidates
+            st.markdown("### Top Candidates Specification Comparison Matrix")
+            render_html(
+                "<p style='color: var(--text-muted); font-size: 0.88rem; margin-top: -8px;'>"
+                "Detailed physical, economic, and circularity comparison with sticky specification labels and best-in-class highlights (⭐)."
+                "</p>"
+            )
+            matrix_res_html = render_full_width_comparison_matrix(top_candidates[:min(4, len(top_candidates))])
+            render_html(matrix_res_html)
+
+            # Qualified Alternatives List & Quick Add to Basket
             st.markdown("### Qualified Alternative Materials")
-            alt_data = []
-            for c in top_candidates:
-                c_cost = c.get("cost_index_usd_per_kg")
-                alt_data.append({
-                    "Rank": f"#{c.get('rank', '-')}",
-                    "Material Name": c.get("name"),
-                    "Overall Score": f"{c.get('total_mcda_score', 0):.1f}",
-                    "Barrier Score": f"{c.get('barrier_score', 0):.1f}",
-                    "Cost Score": f"{c.get('cost_score', 0):.1f}",
-                    "Circularity Score": f"{c.get('sustainability_score', 0):.1f}",
-                    "WVTR (g/m²/d)": c.get("wvtr_g_m2_day"),
-                    "OTR (cc/m²/d)": c.get("otr_cc_m2_day_atm"),
-                    "Cost ($/kg)": f"${c_cost:.2f}" if c_cost is not None else "Unreported",
-                    "Recyclability": c.get("recyclability_status"),
-                    "Compliance": c.get("food_contact_compliance")
-                })
-            st.dataframe(pd.DataFrame(alt_data), use_container_width=True, hide_index=True)
+            alt_mats_pool = [c["name"] for c in top_candidates]
+            add_to_bsk_picks = st.multiselect(
+                "Quick Add Alternatives to Compare Basket (Max 4 Total):",
+                options=alt_mats_pool,
+                default=[c for c in st.session_state.get("compare_basket", []) if c in alt_mats_pool],
+                key="res_alts_basket_multiselect",
+                help="Select materials to immediately update your Compare Basket in the sidebar."
+            )
+            # Sync basket if user toggles picks here
+            if set(add_to_bsk_picks) != set([c for c in st.session_state.get("compare_basket", []) if c in alt_mats_pool]):
+                for p in add_to_bsk_picks:
+                    if p not in st.session_state["compare_basket"] and len(st.session_state["compare_basket"]) < 4:
+                        st.session_state["compare_basket"].append(p)
+                for p in list(st.session_state["compare_basket"]):
+                    if p in alt_mats_pool and p not in add_to_bsk_picks:
+                        st.session_state["compare_basket"].remove(p)
+                st.rerun()
 
             # Collapsible Disqualified Benchmark Materials Section
             if knocked_out:
@@ -1471,14 +2065,26 @@ elif active_tab == "⚖️ Material Comparator":
                 "PET / EVOH / PE Multi-layer Barrier Film (70 µm)",
                 "PLA Bio-plastic Film (30 µm)"
             ]
-    default_compare_picks = [name for name in default_compare_picks if name in all_mat_names]
+    valid_defaults = [name for name in default_compare_picks if name in filtered_mat_names]
+    if len(valid_defaults) < 2 and len(filtered_mat_names) >= 2:
+        valid_defaults = filtered_mat_names[:min(3, len(filtered_mat_names))]
+    elif not valid_defaults:
+        valid_defaults = filtered_mat_names[:min(3, len(filtered_mat_names))]
+
+    # Load from Compare Basket button if basket has items matching filter
+    c_basket = st.session_state.get("compare_basket", [])
+    if c_basket and any(m in filtered_mat_names for m in c_basket):
+        if st.button(f"📥 Load {len([m for m in c_basket if m in filtered_mat_names])} Materials from Compare Basket", key="btn_load_basket_to_cmp"):
+            valid_defaults = [m for m in c_basket if m in filtered_mat_names]
+            st.session_state["comparator_selected_mats"] = valid_defaults
+            st.rerun()
 
     selected_compare_names = st.multiselect(
         "Select Materials to Compare (Choose 2 to 4 materials):",
-        options=all_mat_names,
-        default=default_compare_picks[:3],
+        options=filtered_mat_names,
+        default=valid_defaults[:min(4, len(valid_defaults))],
         max_selections=4,
-        key="comparator_selected_mats"
+        key=f"cmp_filter_mats_{structure_filter.replace(' ', '_')}"
     )
 
     if len(selected_compare_names) < 2:
@@ -1487,43 +2093,54 @@ elif active_tab == "⚖️ Material Comparator":
         selected_mats = [m for m in all_materials if m["name"] in selected_compare_names]
 
         # ---------------------------------------------------------------------
-        # 1. Candidate Material Specimens Cards with Badges & Shortlist Toggle
+        # 1. Candidate Material Specimens Cards with Badges & Basket Toggle
         # ---------------------------------------------------------------------
         st.markdown("##### Candidate Material Specimens")
         mat_cards_cols = st.columns(len(selected_mats))
         for m_col, m_data in zip(mat_cards_cols, selected_mats):
             with m_col:
                 m_img = get_material_image_path(m_data["name"])
-                if m_img and os.path.exists(m_img):
-                    st.image(m_img, use_container_width=True)
+                m_b64 = get_image_base64(m_img)
+                m_bars = compute_mini_bars(m_data)
+                rec_pill = get_recyclability_pill(m_data.get("recyclability_status", ""))
 
-                rec_status = m_data.get("recyclability_status", "").lower()
-                badges = []
-                if "curbside" in rec_status or "mono" in rec_status or "recyclable" in rec_status:
-                    badges.append("<span class='meta-badge' style='background:#E8F5E9; color:#2E7D32; font-weight:700;'>♻️ Recyclable Stream</span>")
-                elif "compost" in rec_status or "bio" in m_data.get("structure_type", "").lower() or "pla" in m_data.get("name", "").lower():
-                    badges.append("<span class='meta-badge' style='background:#FFF3E0; color:#E65100; font-weight:700;'>🍂 Industrially Compostable</span>")
-                else:
-                    badges.append("<span class='meta-badge' style='background:#FFEBEE; color:#C62828;'>⚠️ Specialized Stream</span>")
+                bars_html = "".join(f"""
+                <div class="mini-metric-row">
+                    <div class="mini-metric-label-val">
+                        <span class="mini-metric-label">{b['name']}</span>
+                        <span class="mini-metric-val">{b['val_str']}</span>
+                    </div>
+                    <div class="mini-bar-track">
+                        <div class="mini-bar-fill" style="width: {b['pct']:.1f}%; background-color: {b['color']};"></div>
+                    </div>
+                </div>
+                """ for b in m_bars)
 
-                if "mono" in m_data.get("structure_type", "").lower():
-                    badges.append("<span class='meta-badge' style='background:#E1F5FE; color:#0288D1;'>🔄 Mono-Material</span>")
+                render_html(f"""
+                <div class="mat-specimen-card">
+                    <img src="{m_b64}" class="mat-specimen-img" />
+                    <div class="mat-specimen-body">
+                        <div class="mat-specimen-name">{m_data['name'].split('(')[0].strip()}</div>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px;">
+                            <span class="meta-badge" style="font-size: 0.68rem;">{m_data.get('structure_type', 'Flexible')}</span>
+                            <span class="meta-badge" style="font-size: 0.68rem;">{m_data.get('nominal_thickness_um', '-')} µm</span>
+                        </div>
+                        <div class="mini-metrics-container">{bars_html}</div>
+                        <div style="margin-top: 4px;">{rec_pill}</div>
+                    </div>
+                </div>
+                """)
 
-                render_html(
-                    f"<div style='text-align: center; margin-bottom: 8px;'>"
-                    f"<div style='font-weight: 800; font-size: 0.88rem; color: var(--text-main); line-height: 1.3; margin-bottom: 4px;'>{m_data['name'].split('(')[0].strip()}</div>"
-                    f"<div style='margin-bottom: 6px;'>{' '.join(badges)}</div>"
-                    f"</div>"
-                )
-
-                is_shortlisted = m_data["name"] in st.session_state.get("material_shortlist", [])
-                slist_label = "⭐ Shortlisted" if is_shortlisted else "⭐ Save to Shortlist"
-                slist_type = "primary" if is_shortlisted else "secondary"
-                if st.button(slist_label, key=f"btn_shortlist_mat_{m_data['name']}", type=slist_type, use_container_width=True):
-                    if not is_shortlisted:
-                        st.session_state["material_shortlist"].append(m_data["name"])
+                # Add to Compare Basket / Remove Toggle
+                is_in_bsk = m_data["name"] in st.session_state.get("compare_basket", [])
+                bsk_lbl = "✓ In Compare Basket" if is_in_bsk else "➕ Add to Compare"
+                bsk_typ = "primary" if is_in_bsk else "secondary"
+                can_add_bsk = is_in_bsk or len(st.session_state.get("compare_basket", [])) < 4
+                if st.button(bsk_lbl, key=f"btn_cmp_card_bsk_{m_data['name'][:8]}", type=bsk_typ, disabled=(not can_add_bsk and not is_in_bsk), use_container_width=True):
+                    if is_in_bsk:
+                        st.session_state["compare_basket"].remove(m_data["name"])
                     else:
-                        st.session_state["material_shortlist"].remove(m_data["name"])
+                        st.session_state["compare_basket"].append(m_data["name"])
                     st.rerun()
 
         # ---------------------------------------------------------------------
@@ -1748,7 +2365,7 @@ elif active_tab == "⚖️ Material Comparator":
             matrix_rows[10][m["name"]] = m.get("data_source", "—")
 
         df_matrix = pd.DataFrame(matrix_rows)
-        st.dataframe(df_matrix, use_container_width=True, hide_index=True)
+        render_html(render_full_width_comparison_matrix(selected_mats))
 
         # ---------------------------------------------------------------------
         # 8. Export Comparison: CSV & Executive PDF Report

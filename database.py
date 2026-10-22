@@ -59,6 +59,7 @@ def init_database(db_path: str = DB_FILE_PATH, force_reset: bool = False) -> Non
         data_source TEXT NOT NULL,
         test_conditions TEXT NOT NULL,
         is_verified_experimental INTEGER NOT NULL DEFAULT 0,
+        image_path TEXT,
         notes TEXT
     );
     """)
@@ -79,9 +80,25 @@ def init_database(db_path: str = DB_FILE_PATH, force_reset: bool = False) -> Non
         puncture_risk TEXT NOT NULL,
         typical_spoilage_mode TEXT NOT NULL,
         critical_aw REAL,
+        image_path TEXT,
+        source TEXT,
         notes TEXT
     );
     """)
+
+    # Backward compatibility migrations for existing database files
+    cursor.execute("PRAGMA table_info(commodity_presets);")
+    existing_cols = {row["name"] for row in cursor.fetchall()}
+    if "image_path" not in existing_cols:
+        cursor.execute("ALTER TABLE commodity_presets ADD COLUMN image_path TEXT;")
+    if "source" not in existing_cols:
+        cursor.execute("ALTER TABLE commodity_presets ADD COLUMN source TEXT;")
+
+    cursor.execute("PRAGMA table_info(packaging_materials);")
+    existing_mat_cols = {row["name"] for row in cursor.fetchall()}
+    if "image_path" not in existing_mat_cols:
+        cursor.execute("ALTER TABLE packaging_materials ADD COLUMN image_path TEXT;")
+
 
     # 3. Audit Log / Recommendation History Table
     cursor.execute("""
@@ -541,7 +558,34 @@ def seed_default_materials(conn: sqlite3.Connection) -> None:
 def seed_default_commodity_presets(conn: sqlite3.Connection) -> None:
     """
     Seeds baseline food commodities with food science spoilage parameters.
+    Attempts to seed full 36-commodity preset catalog from scripts.seed_products,
+    falling back to standard baseline presets if not importable.
     """
+    try:
+        from scripts.seed_products import COMMODITY_DATA
+        cursor = conn.cursor()
+        for c in COMMODITY_DATA:
+            cursor.execute("""
+            INSERT OR REPLACE INTO commodity_presets (
+                name, category, moisture_sensitivity, oxygen_sensitivity,
+                fat_content_level, light_sensitivity, recommended_temp_c,
+                recommended_rh_percent, target_shelf_life_days, puncture_risk,
+                typical_spoilage_mode, critical_aw, notes, image_path, source
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (
+                c["name"], c["category"], c["moisture_sensitivity"],
+                c["oxygen_sensitivity"], c["fat_content_level"],
+                c["light_sensitivity"], c["recommended_temp_c"],
+                c["recommended_rh_percent"], c["target_shelf_life_days"],
+                c["puncture_risk"], c["typical_spoilage_mode"],
+                c["critical_aw"], c["notes"], c.get("image_path"),
+                c.get("source")
+            ))
+        conn.commit()
+        return
+    except Exception:
+        pass
+
     commodities = [
         (
             "Fried Potato Chips & Crisps",

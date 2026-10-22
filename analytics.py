@@ -13,17 +13,18 @@ from plotly.subplots import make_subplots
 from recommender import RECYCLABILITY_SCORE_MAP
 
 
-# Modern FoodTech 3D Palette: Vibrant Orange, Amber Gold, Eco Green, Sky Blue, Deep Crimson
+# Modern FoodTech Design Palette: Warm Orange, Forest Green, Sky Blue, Amber Gold
 PALETTE = [
-    "#FF8A00",  # Primary Vibrant Orange
-    "#FFB300",  # Warm Amber Gold
-    "#2E7D32",  # Eco Forest Green
+    "#E9783D",  # Primary Vibrant Food Orange
+    "#173D32",  # Deep Forest Green
     "#0288D1",  # Deep Sky Blue
-    "#E65100",  # Deep Orange
-    "#8D6E63",  # Warm Brown
-    "#7B1FA2",  # Rich Purple
-    "#455A64",  # Muted Slate
+    "#E9B44C",  # Warm Amber Gold
+    "#8E24AA",  # Rich Purple
+    "#00897B",  # Deep Teal
+    "#D81B60",  # Rose Red
+    "#5D4037",  # Espresso Brown
 ]
+
 
 
 def create_radar_comparison_chart(selected_materials: List[Dict[str, Any]]) -> Tuple[go.Figure, List[str]]:
@@ -320,8 +321,8 @@ def create_ranking_horizontal_bar_chart(candidates: List[Dict[str, Any]], top_n:
     names = [c["name"].split("(")[0].strip() for c in sorted_cands]
     scores = [round(float(c.get("total_mcda_score", 0.0)), 1) for c in sorted_cands]
 
-    # Highest score receives vibrant orange, runner-ups receive amber gold
-    bar_colors = ["#FF8A00" if i == len(sorted_cands) - 1 else "#FFB300" for i in range(len(sorted_cands))]
+    # Highest score receives vibrant orange, runner-ups receive forest green / amber
+    bar_colors = [PALETTE[0] if i == len(sorted_cands) - 1 else PALETTE[1] for i in range(len(sorted_cands))]
 
     fig = go.Figure(go.Bar(
         x=scores,
@@ -329,19 +330,18 @@ def create_ranking_horizontal_bar_chart(candidates: List[Dict[str, Any]], top_n:
         orientation="h",
         text=[f"{s}/100" for s in scores],
         textposition="outside",
-        textfont=dict(color="#3E2723", size=11, family="Poppins, sans-serif"),
+        textfont=dict(color="#202622", size=11, family="Poppins, Inter, sans-serif"),
         marker=dict(color=bar_colors),
-        hovertemplate="<b>%{y}</b><br>Overall Score: %{x} / 100<extra></extra>"
+        hovertemplate="<b>%{y}</b><br>Composite Decision Score: %{x:.1f} / 100<extra></extra>"
     ))
     fig.update_layout(
-        title=dict(text="Candidate Ranking: Overall Multi-Criteria Match Score", font=dict(color="#3E2723", size=13)),
-        xaxis=dict(title="Match Score (0-100)", range=[0, 115], gridcolor="rgba(141, 110, 99, 0.15)", tickfont=dict(color="#6D4C41")),
-        yaxis=dict(autorange=True, tickfont=dict(color="#3E2723", size=11)),
-        height=270,
-        margin=dict(l=20, r=40, t=40, b=30),
+        xaxis=dict(title="MCDA Composite Match Score (0 - 100)", range=[0, 115], gridcolor="rgba(23, 61, 50, 0.10)", tickfont=dict(color="#536058")),
+        yaxis=dict(autorange=True, tickfont=dict(color="#202622", size=11)),
+        height=260,
+        margin=dict(l=10, r=30, t=10, b=30),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#3E2723")
+        font=dict(color="#202622", family="Inter, sans-serif")
     )
     return fig
 
@@ -349,11 +349,11 @@ def create_ranking_horizontal_bar_chart(candidates: List[Dict[str, Any]], top_n:
 def create_comparator_subplots(selected_materials: List[Dict[str, Any]], normalized: bool = False) -> go.Figure:
     """
     Builds 4 distinct comparative subplots across key engineering dimensions:
-    1. Water Vapor Transmission (WVTR) - Lower is better
-    2. Oxygen Transmission (OTR) - Lower is better
+    1. Water Vapor Transmission (WVTR, g/m²/day) - Lower is better
+    2. Oxygen Transmission (OTR, cc/m²/day/atm) - Lower is better
     3. Unit Cost ($/kg) - Lower is better
-    4. Circularity / Recyclability Score (0-100) - Higher is better
-    Best value per pillar highlighted with 🏆 Green, worst highlighted with subtle Red.
+    4. Embodied Carbon Footprint (kg CO2e / kg) - Lower is better
+    Uses consistent high-contrast colors per material across all charts.
     """
     if not selected_materials:
         return go.Figure()
@@ -365,109 +365,90 @@ def create_comparator_subplots(selected_materials: List[Dict[str, Any]], normali
     wvtrs = [float(m.get("wvtr_g_m2_day", 10.0)) for m in selected_materials]
     otrs = [float(m.get("otr_cc_m2_day_atm", 100.0)) for m in selected_materials]
     costs = [float(m.get("cost_index_usd_per_kg", 3.0) or 3.0) for m in selected_materials]
-    circs = [float(RECYCLABILITY_SCORE_MAP.get(m.get("recyclability_status", ""), 40.0)) for m in selected_materials]
+    co2s = [float(m.get("carbon_footprint_kg_co2_per_kg", 2.0) or 2.0) for m in selected_materials]
 
     # Subplot titles with unit and optimization direction
     titles = [
-        "💧 Moisture (WVTR) ↓" if not normalized else "💧 Moisture Barrier (0-100) ↑",
-        "💨 Oxygen (OTR) ↓" if not normalized else "💨 Oxygen Barrier (0-100) ↑",
-        "💰 Cost ($/kg) ↓" if not normalized else "💰 Cost Economy (0-100) ↑",
-        "🌱 Circularity Score ↑"
+        "Water Vapor (WVTR, g/m²/d) ↓" if not normalized else "Moisture Barrier Score ↑",
+        "Oxygen (OTR, cc/m²/d) ↓" if not normalized else "Oxygen Barrier Score ↑",
+        "Cost ($ / kg) ↓" if not normalized else "Cost Economy Score ↑",
+        "Carbon (kg CO₂e / kg) ↓" if not normalized else "Low-Carbon Score ↑"
     ]
 
     fig = make_subplots(
         rows=1, cols=4,
         subplot_titles=titles,
-        horizontal_spacing=0.08
+        horizontal_spacing=0.07
     )
 
-    def get_bar_colors(vals, lower_is_better=True):
-        if len(vals) <= 1:
-            return ["#2E7D32"] * len(vals)
-        best_idx = int(np.argmin(vals)) if lower_is_better else int(np.argmax(vals))
-        worst_idx = int(np.argmax(vals)) if lower_is_better else int(np.argmin(vals))
-        colors = []
-        for i in range(len(vals)):
-            if i == best_idx:
-                colors.append("#2E7D32")  # Best (Forest Green)
-            elif i == worst_idx:
-                colors.append("#E53935")  # Worst (Muted Crimson)
-            else:
-                colors.append("#FF8A00")  # Middle (Vibrant Orange)
-        return colors
+    # Consistent color per material
+    mat_colors = [PALETTE[i % len(PALETTE)] for i in range(len(selected_materials))]
 
     # Normalized scores computation (0-100)
     if normalized:
-        # Lower WVTR -> higher score
         min_w, max_w = min(wvtrs), max(wvtrs)
-        w_scores = [round(100.0 if max_w == min_w else 100.0 - ((w - min_w) / (max_w - min_w)) * 80.0, 1) for w in wvtrs]
-        # Lower OTR -> higher score
+        w_scores = [round(100.0 if max_w == min_w else 100.0 - ((w - min_w) / max(0.001, (max_w - min_w))) * 80.0, 1) for w in wvtrs]
         min_o, max_o = min(otrs), max(otrs)
-        o_scores = [round(100.0 if max_o == min_o else 100.0 - ((o - min_o) / (max_o - min_o)) * 80.0, 1) for o in otrs]
-        # Lower Cost -> higher score
+        o_scores = [round(100.0 if max_o == min_o else 100.0 - ((o - min_o) / max(0.001, (max_o - min_o))) * 80.0, 1) for o in otrs]
         min_c, max_c = min(costs), max(costs)
-        c_scores = [round(100.0 if max_c == min_c else 100.0 - ((c - min_c) / (max_c - min_c)) * 80.0, 1) for c in costs]
-        
-        y_w, y_o, y_c, y_s = w_scores, o_scores, c_scores, circs
-        c_w = get_bar_colors(w_scores, lower_is_better=False)
-        c_o = get_bar_colors(o_scores, lower_is_better=False)
-        c_c = get_bar_colors(c_scores, lower_is_better=False)
-        c_s = get_bar_colors(circs, lower_is_better=False)
-        
-        txt_w = [f"🏆 {v:.0f}" if c == "#2E7D32" else f"{v:.0f}" for v, c in zip(y_w, c_w)]
-        txt_o = [f"🏆 {v:.0f}" if c == "#2E7D32" else f"{v:.0f}" for v, c in zip(y_o, c_o)]
-        txt_c = [f"🏆 {v:.0f}" if c == "#2E7D32" else f"{v:.0f}" for v, c in zip(y_c, c_c)]
-        txt_s = [f"🏆 {v:.0f}" if c == "#2E7D32" else f"{v:.0f}" for v, c in zip(y_s, c_s)]
+        c_scores = [round(100.0 if max_c == min_c else 100.0 - ((c - min_c) / max(0.001, (max_c - min_c))) * 80.0, 1) for c in costs]
+        min_e, max_e = min(co2s), max(co2s)
+        e_scores = [round(100.0 if max_e == min_e else 100.0 - ((e - min_e) / max(0.001, (max_e - min_e))) * 80.0, 1) for e in co2s]
+
+        y_w, y_o, y_c, y_e = w_scores, o_scores, c_scores, e_scores
+        txt_w = [f"{v:.0f}" for v in y_w]
+        txt_o = [f"{v:.0f}" for v in y_o]
+        txt_c = [f"{v:.0f}" for v in y_c]
+        txt_e = [f"{v:.0f}" for v in y_e]
     else:
-        y_w, y_o, y_c, y_s = wvtrs, otrs, costs, circs
-        c_w = get_bar_colors(wvtrs, lower_is_better=True)
-        c_o = get_bar_colors(otrs, lower_is_better=True)
-        c_c = get_bar_colors(costs, lower_is_better=True)
-        c_s = get_bar_colors(circs, lower_is_better=False)
-        
-        txt_w = [f"🏆 {v:.2f}" if c == "#2E7D32" else f"{v:.2f}" for v, c in zip(y_w, c_w)]
-        txt_o = [f"🏆 {v:.1f}" if c == "#2E7D32" else f"{v:.1f}" for v, c in zip(y_o, c_o)]
-        txt_c = [f"🏆 ${v:.2f}" if c == "#2E7D32" else f"${v:.2f}" for v, c in zip(y_c, c_c)]
-        txt_s = [f"🏆 {v:.0f}" if c == "#2E7D32" else f"{v:.0f}" for v, c in zip(y_s, c_s)]
+        y_w, y_o, y_c, y_e = wvtrs, otrs, costs, co2s
+        txt_w = [f"{v:.2f}" for v in y_w]
+        txt_o = [f"{v:.1f}" for v in y_o]
+        txt_c = [f"${v:.2f}" for v in y_c]
+        txt_e = [f"{v:.2f}" for v in y_e]
 
     # 1. WVTR Bar
     fig.add_trace(go.Bar(
         x=short_names, y=y_w, text=txt_w, textposition="outside",
-        marker=dict(color=c_w), name="WVTR", hovertext=full_names,
+        marker=dict(color=mat_colors), name="WVTR", hovertext=full_names,
+        hovertemplate="<b>%{hovertext}</b><br>WVTR: %{y:.2f} g/m²/day<extra></extra>",
         showlegend=False
     ), row=1, col=1)
 
     # 2. OTR Bar
     fig.add_trace(go.Bar(
         x=short_names, y=y_o, text=txt_o, textposition="outside",
-        marker=dict(color=c_o), name="OTR", hovertext=full_names,
+        marker=dict(color=mat_colors), name="OTR", hovertext=full_names,
+        hovertemplate="<b>%{hovertext}</b><br>OTR: %{y:.1f} cc/m²/day/atm<extra></extra>",
         showlegend=False
     ), row=1, col=2)
 
     # 3. Cost Bar
     fig.add_trace(go.Bar(
         x=short_names, y=y_c, text=txt_c, textposition="outside",
-        marker=dict(color=c_c), name="Cost", hovertext=full_names,
+        marker=dict(color=mat_colors), name="Cost", hovertext=full_names,
+        hovertemplate="<b>%{hovertext}</b><br>Unit Cost: $%{y:.2f} / kg<extra></extra>",
         showlegend=False
     ), row=1, col=3)
 
-    # 4. Circularity Bar
+    # 4. CO2e Bar
     fig.add_trace(go.Bar(
-        x=short_names, y=y_s, text=txt_s, textposition="outside",
-        marker=dict(color=c_s), name="Circularity", hovertext=full_names,
+        x=short_names, y=y_e, text=txt_e, textposition="outside",
+        marker=dict(color=mat_colors), name="CO2e", hovertext=full_names,
+        hovertemplate="<b>%{hovertext}</b><br>Carbon Footprint: %{y:.2f} kg CO₂e / kg<extra></extra>",
         showlegend=False
     ), row=1, col=4)
 
     fig.update_layout(
         height=320,
-        margin=dict(l=30, r=30, t=50, b=40),
+        margin=dict(l=30, r=30, t=40, b=40),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#3E2723", family="Inter, sans-serif")
+        font=dict(color="#202622", family="Inter, sans-serif")
     )
     for col_idx in range(1, 5):
-        fig.update_xaxes(showgrid=False, linecolor="rgba(62, 39, 35, 0.2)", tickfont=dict(size=10, color="#3E2723"), row=1, col=col_idx)
-        fig.update_yaxes(showgrid=True, gridcolor="rgba(62, 39, 35, 0.08)", linecolor="rgba(62, 39, 35, 0.2)", tickfont=dict(size=9, color="#6D4C41"), row=1, col=col_idx)
+        fig.update_xaxes(showgrid=False, linecolor="rgba(23, 61, 50, 0.2)", tickfont=dict(size=9.5, color="#202622"), row=1, col=col_idx)
+        fig.update_yaxes(showgrid=True, gridcolor="rgba(23, 61, 50, 0.08)", linecolor="rgba(23, 61, 50, 0.2)", tickfont=dict(size=9, color="#536058"), row=1, col=col_idx)
 
     # If raw values and OTR range is large, apply log scale to col 2
     if not normalized and max(otrs) / max(0.01, min(otrs)) > 40:
@@ -476,6 +457,7 @@ def create_comparator_subplots(selected_materials: List[Dict[str, Any]], normali
         fig.update_yaxes(type="log", row=1, col=1)
 
     return fig
+
 
 
 def create_comparator_heatmap(selected_materials: List[Dict[str, Any]]) -> go.Figure:
